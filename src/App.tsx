@@ -1,67 +1,58 @@
-import { useAuth0 } from "@auth0/auth0-react";
-import { LogoutButton } from "./components/login/LogoutButton";
-import { LoginButton } from "./components/login/LoginButton";
-import { ModeToggle } from "./context/ModeToggle";
-import { useEffect } from "react";
+// src\App.tsx
 
-const { VITE_BACKEND_URL, DEV } = import.meta.env;
+import { LoginButton } from "./components/login/LoginButton";
+import { LogoutButton } from "./components/login/LogoutButton";
+import { ModeToggle } from "./context/ModeToggle";
+import { useAuth } from "./hooks/useAuth";
+
+const { DEV } = import.meta.env;
 
 export const ContentAuthenticated = () => {
-  const { getAccessTokenSilently } = useAuth0();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const token = await getAccessTokenSilently();
-
-      const response = await fetch(`${VITE_BACKEND_URL}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      await response.json();
-    }
-    fetchData().then(res => {
-      console.log(res);
-    }).catch(err => {
-      console.error(err);
-    });
-  }, []);
-
   return (
-    <>
-      <ModeToggle />
-      <div>Contenido visible para usuarios autenticados</div>
-    </>
+    <div>Contenido visible para usuarios autenticados</div>
   )
 }
 
 function App() {
-  const { user, isAuthenticated, isLoading } = useAuth0();
-
-  if (DEV) {
-    return (
-      <ContentAuthenticated />
-    )
-  }
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="p-8">Cargando...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-lg">Cargando...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated && !DEV) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-6">
+        <div className="absolute top-4 right-4">
+          <ModeToggle />
+        </div>
+        <div className="text-center space-y-4">
+          <h1 className="text-3xl font-bold">Mi Salario</h1>
+          <p className="text-muted-foreground">Iniciá sesión para continuar</p>
+          <LoginButton />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <>
-      {isAuthenticated ? <LogoutButton /> : <LoginButton />}
-      {user?.name}
-
-      {
-        isAuthenticated ? (
-          <ContentAuthenticated />
-        ) : (
-          <div>Contenido visible para usuarios no autenticados</div>
-        )
-      }
-    </>
-  )
+    <div className="min-h-screen">
+      <header className="flex items-center justify-between p-4 border-b">
+        <ModeToggle />
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">{user?.name || user?.email || 'Usuario'}</span>
+          <LogoutButton />
+        </div>
+      </header>
+      <main className="p-4">
+        <ContentAuthenticated />
+      </main>
+    </div>
+  );
 }
 
 export default App

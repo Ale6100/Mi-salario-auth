@@ -1,16 +1,18 @@
 // src\components\login\LogoutButton.tsx
 
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "../ui/button";
 
 export const LogoutButton = () => {
-  const { logout } = useAuth0();
+  const { logout } = useAuth();
 
   return (
-    <button 
-      className="bg-red-600 text-white px-4 py-2 rounded-md"
+    <Button
+      variant="destructive"
+      size="sm"
       onClick={() => logout({ logoutParams: { returnTo: globalThis.location.origin } })}
     >
       Cerrar Sesión
-    </button>
+    </Button>
   );
 };

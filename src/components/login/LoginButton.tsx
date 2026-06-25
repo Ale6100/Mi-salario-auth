@@ -1,16 +1,18 @@
 // src\components\login\LoginButton.tsx
 
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "../ui/button";
 
 export const LoginButton = () => {
-  const { loginWithRedirect } = useAuth0();
+  const { loginWithRedirect } = useAuth();
 
   return (
-    <button
-      className="bg-blue-600 text-white px-4 py-2 rounded-md"
+    <Button
+      variant="default"
+      size="sm"
       onClick={() => loginWithRedirect()}
     >
       Iniciar Sesión
-    </button>
+    </Button>
   );
 };
