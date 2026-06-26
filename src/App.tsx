@@ -1,20 +1,13 @@
 // src\App.tsx
 
+import { useAuth0 } from "@auth0/auth0-react";
 import { LoginButton } from "./components/login/LoginButton";
 import { LogoutButton } from "./components/login/LogoutButton";
 import { ModeToggle } from "./context/ModeToggle";
-import { useAuth } from "./hooks/useAuth";
-
-const { DEV } = import.meta.env;
-
-export const ContentAuthenticated = () => {
-  return (
-    <div>Contenido visible para usuarios autenticados</div>
-  )
-}
+import { ContentAuthenticated } from "./components/ContentAuthenticated";
 
 function App() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth0();
 
   if (isLoading) {
     return (
@@ -24,7 +17,7 @@ function App() {
     );
   }
 
-  if (!isAuthenticated && !DEV) {
+  if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-6">
         <div className="absolute top-4 right-4">
