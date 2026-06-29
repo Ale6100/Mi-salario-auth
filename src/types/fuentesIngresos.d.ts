@@ -10,10 +10,11 @@ export type FuenteIngresosDB = {
 };
 
 export type POSTFuenteIngresos = {
+  sub: string;
   nombre: string;
   activo: boolean;
   aguinaldo: boolean;
   color: string;
 }
 
-export type PUTFuenteIngresos = POSTFuenteIngresos
+export type PUTFuenteIngresos = Omit<POSTFuenteIngresos, "sub">

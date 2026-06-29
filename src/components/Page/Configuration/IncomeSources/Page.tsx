@@ -50,6 +50,11 @@ export const IncomeSourcesPage = () => {
       toast.loading('Espere...', { id: toastId });
       const response = await fetchDeleteFuenteIngresos({ id, token });
 
+      if (response.statusCode === 409) {
+        toast.error('No se puede eliminar la fuente de ingreso porque tiene ingresos asociados', { id: toastId });
+        return;
+      }
+
       if (response.statusCode != 200) {
         toast.error('Error al eliminar la fuente de ingreso', { id: toastId });
         return;
@@ -60,13 +65,17 @@ export const IncomeSourcesPage = () => {
     }
   }
 
-  const columns = useMemo(() => createColumns({ handleEdit, handleDelete }), []);
+  const columns = useMemo(() => createColumns({ handleEdit, handleDelete, isFetching }), [isFetching]);
 
-  const ButtonAddSource = <Button onClick={() => setIsOpenAddEditDialog({ status: true, source: undefined })} className="cursor-pointer">Agregar</Button>
+  const ButtonAddSource = <Button onClick={() => setIsOpenAddEditDialog({ status: true, source: undefined })} className="cursor-pointer" disabled={isFetching}>Agregar</Button>
 
   return (
     <section className="p-4 space-y-4">
       <h1 className="text-3xl max-sm:text-lg font-bold text-center">Fuentes de Ingreso</h1>
+
+      <p className="text-muted-foreground text-center text-sm max-w-md mx-auto">
+        Aquí puedes gestionar tus fuentes de ingreso
+      </p>
 
       <Card className='p-4 bg-card rounded-xl shadow-md'>
         <DataTable columns={columns} data={data} dataLoading={isFetching} toolbarActions={[ButtonAddSource]} sorting={sorting} columnsHidden={['activo']} />

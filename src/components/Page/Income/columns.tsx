@@ -1,41 +1,34 @@
-// src\components\Page\Configuration\IncomeSources\columns.tsx
+// src\components\Page\Income\columns.tsx
 
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/utils/DataTableColumnHeader";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { formatPrice } from "@/lib/utils";
 import { Settings2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { FuenteIngresosDB } from "@/types/fuentesIngresos";
+import type { ConceptoIngresosDB } from "@/types/conceptosIngresos";
 
 type CreateColumnsProps = {
-  readonly handleEdit: (fuente: FuenteIngresosDB) => void;
-  readonly handleDelete: (fuente: FuenteIngresosDB) => void;
+  readonly handleEdit: (fuente: ConceptoIngresosDB) => void;
+  readonly handleDelete: (fuente: ConceptoIngresosDB) => void;
   readonly isFetching: boolean;
 };
 
-export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateColumnsProps): ColumnDef<FuenteIngresosDB>[] => [
+export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateColumnsProps): ColumnDef<ConceptoIngresosDB>[] => [
   {
-    accessorKey: 'nombre',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Nombre" />,
-    accessorFn: (row) => row.nombre || '-',
+    accessorKey: 'valor',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Valor" />,
+    accessorFn: (row) => formatPrice(row.valor) || '-',
   },
   {
-    accessorKey: 'color',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Color" />,
-    cell: ({ row }) => {
-      const color = row.original.color;
-      if (!color) return <span>-</span>;
-      return (
-        <div className="flex items-center gap-2">
-          <div
-            className="size-5 rounded border border-border shrink-0"
-            style={{ backgroundColor: color }}
-            title={color}
-          />
-          <span className="font-mono text-sm">{color}</span>
-        </div>
-      );
-    },
+    accessorKey: 'id_fuente_ingreso',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Fuente de ingreso" />,
+    accessorFn: (row) => row.id_fuente_ingreso?.nombre || '-',
+  },
+  {
+    accessorKey: 'periodo',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Periodo" />,
+    accessorFn: (row) => row.periodo || '-',
   },
   {
     accessorKey: "acciones",
@@ -61,7 +54,7 @@ export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateCo
             <DropdownMenuSeparator />
             <DropdownMenuGroup className="flex flex-col">
               <DropdownMenuItem
-                title='Editar fuente de ingreso'
+                title='Editar ingreso'
                 className='cursor-pointer'
                 onClick={() => handleEdit(row.original)}
                 disabled={isFetching}
@@ -69,7 +62,7 @@ export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateCo
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem
-                title='Eliminar fuente de ingreso'
+                title='Eliminar ingreso'
                 className='cursor-pointer'
                 onClick={() => handleDelete(row.original)}
                 disabled={isFetching}
@@ -82,8 +75,4 @@ export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateCo
       )
     }
   },
-  {
-    accessorKey: "activo",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Activo" />,
-  }
-]
+];

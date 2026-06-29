@@ -10,7 +10,6 @@ import { RUTAS } from "@/lib/const"
 import { Separator } from "@/components/ui/separator"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail } from "@/components/ui/sidebar"
 import { useAuth0 } from "@auth0/auth0-react"
-import { useTheme } from "@/context/utilThemeProvider"
 
 const mainNavItems = [
   { title: "Dashboard", url: RUTAS.dashboard, icon: LayoutDashboard },
@@ -29,15 +28,7 @@ const configNavItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, logout } = useAuth0()
-  const { theme } = useTheme()
   const location = useLocation()
-
-  const effectiveTheme = (() => {
-    if (theme === "system") {
-      return globalThis.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-    }
-    return theme
-  })()
 
   return (
     <Sidebar variant="sidebar" collapsible="icon" {...props}>
@@ -45,22 +36,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
+              asChild
               size="lg"
               className="group-data-[collapsible=icon]:p-0!"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <img
-                  src={effectiveTheme === "dark" ? "/favicon-dark.svg" : "/favicon-light.svg"}
-                  alt="Mi Salario"
-                  className="size-4"
-                />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Mi Salario</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  Gestión financiera
-                </span>
-              </div>
+              <Link to={RUTAS.dashboard}>
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <img
+                    src="/favicon-dark.svg"
+                    alt="Mi salario"
+                    className="size-4"
+                  />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Mi salario</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    Gestión financiera
+                  </span>
+                </div>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -116,8 +110,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <Separator />
         <div className="flex items-center justify-between px-2 py-1.5">
           <div className="flex items-center gap-2 truncate">
-            <div className="flex size-7 items-center justify-center rounded-full bg-muted">
-              <User className="size-3.5" />
+            <div className="flex size-7 items-center justify-center rounded-full bg-muted overflow-hidden">
+              {user?.picture ? (
+                <img
+                  src={user.picture}
+                  alt="Avatar"
+                  className="size-full object-cover"
+                />
+              ) : (
+                <User className="size-3.5" />
+              )}
             </div>
             <span className="truncate text-sm text-muted-foreground">
               {user?.name || user?.email || "Usuario"}

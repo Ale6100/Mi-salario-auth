@@ -33,10 +33,10 @@ export const DialogAddEditIncomeSource = ({ isOpen, setIsOpen, actualSources }: 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nombre: isEdit ? isOpen.source?.nombre || "" : "",
+      nombre: isEdit ? isOpen.source?.nombre ?? "" : "",
       activo: isEdit ? isOpen.source?.activo ?? true : true,
       aguinaldo: isEdit ? isOpen.source?.aguinaldo ?? false : false,
-      color: isEdit ? (isOpen.source?.color || "") : "",
+      color: isEdit ? (isOpen.source?.color ?? "") : "",
     }
   });
 
@@ -49,10 +49,11 @@ export const DialogAddEditIncomeSource = ({ isOpen, setIsOpen, actualSources }: 
     if (isEdit || !user?.sub || !token) return;
 
     if (actualSources.some(source => source.nombre.toLowerCase() === data.nombre.toLowerCase())) {
-      return form.setError("nombre", { type: "manual", message: "Ya existe una fuente de ingreso con este nombre" }); // Todo: testear
+      return form.setError("nombre", { type: "manual", message: "Ya tienes una fuente de ingreso con este nombre" });
     }
 
     const dataToSend: POSTFuenteIngresos = {
+      sub: user.sub,
       nombre: data.nombre,
       activo: data.aguinaldo ? false : data.activo,
       aguinaldo: data.aguinaldo,
@@ -61,7 +62,6 @@ export const DialogAddEditIncomeSource = ({ isOpen, setIsOpen, actualSources }: 
 
     toast.loading("Espere...", { id: toastId });
     const response = await fetchPostFuenteIngresos({
-      sub: user.sub,
       token,
       data: dataToSend,
     })
@@ -82,7 +82,7 @@ export const DialogAddEditIncomeSource = ({ isOpen, setIsOpen, actualSources }: 
     if (!isEdit || !user?.sub || !token || !isOpen.source?._id) return;
 
     if (actualSources.some(source => source.nombre.toLowerCase() === data.nombre.toLowerCase() && source._id !== isOpen.source?._id)) {
-      return form.setError("nombre", { type: "manual", message: "Ya existe una fuente de ingreso con este nombre" }); // Todo: testear
+      return form.setError("nombre", { type: "manual", message: "Ya tienes una fuente de ingreso con este nombre" });
     }
 
     const dataToSend: PUTFuenteIngresos = {

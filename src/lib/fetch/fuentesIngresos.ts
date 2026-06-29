@@ -25,17 +25,15 @@ export const fetchFuentesIngresos = async ({ sub, token, signal }: FetchGetFuent
 }
 
 type FetchPostFuenteIngresosParams = {
-  sub: string;
   token: string;
   data: POSTFuenteIngresos;
 }
 
 type FetchPostFuenteIngresosResponse = ResponseBackend<FuenteIngresosDB>;
 
-export const fetchPostFuenteIngresos = async ({ sub, token, data }: FetchPostFuenteIngresosParams) => {
-  const queryString = new URLSearchParams({ sub }).toString();
+export const fetchPostFuenteIngresos = async ({ token, data }: FetchPostFuenteIngresosParams) => {
 
-  return await fetch(`${VITE_BACKEND_URL}/fuentes-ingresos?${queryString}`, {
+  return await fetch(`${VITE_BACKEND_URL}/fuentes-ingresos`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${token}`,
