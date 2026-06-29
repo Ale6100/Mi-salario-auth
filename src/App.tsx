@@ -1,13 +1,17 @@
 // src\App.tsx
 
-import { useAuth0 } from "@auth0/auth0-react";
-import { LoginButton } from "./components/login/LoginButton";
-import { LogoutButton } from "./components/login/LogoutButton";
-import { ModeToggle } from "./context/ModeToggle";
+import { AppSidebar } from "./components/sidebar/AppSidebar";
+import { BrowserRouter } from "react-router";
 import { ContentAuthenticated } from "./components/ContentAuthenticated";
+import { LoginButton } from "./components/login/LoginButton";
+import { ModeToggle } from "./context/ModeToggle";
+import { Separator } from "./components/ui/separator";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "./components/ui/sidebar";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { useAuth0 } from "@auth0/auth0-react";
 
 function App() {
-  const { user, isAuthenticated, isLoading } = useAuth0();
+  const { isAuthenticated, isLoading } = useAuth0();
 
   if (isLoading) {
     return (
@@ -24,7 +28,7 @@ function App() {
           <ModeToggle />
         </div>
         <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold">Mi Salario</h1>
+          <h1 className="text-3xl font-bold">Mi salario</h1>
           <p className="text-muted-foreground">Iniciá sesión para continuar</p>
           <LoginButton />
         </div>
@@ -33,18 +37,23 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen">
-      <header className="flex items-center justify-between p-4 border-b">
-        <ModeToggle />
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">{user?.name || user?.email || 'Usuario'}</span>
-          <LogoutButton />
-        </div>
-      </header>
-      <main className="p-4">
-        <ContentAuthenticated />
-      </main>
-    </div>
+    <BrowserRouter>
+      <TooltipProvider>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset>
+            <header className="flex h-14 shrink-0 items-center gap-2 border-b md:hidden">
+              <div className="flex items-center gap-2 px-4">
+                <SidebarTrigger />
+                <Separator orientation="vertical" className="mr-2 h-4" />
+                <span className="text-sm font-semibold">Mi Salario</span>
+              </div>
+            </header>
+            <ContentAuthenticated />
+          </SidebarInset>
+        </SidebarProvider>
+      </TooltipProvider>
+    </BrowserRouter>
   );
 }
 

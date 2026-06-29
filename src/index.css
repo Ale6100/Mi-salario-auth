@@ -127,6 +127,12 @@
   html {
     @apply font-sans;
     }
+
+  .required::after {
+    content: "\00a0*";
+    margin-left: -5px;
+    color: red;
+  }
 }
 
 /* View Transitions API - Animación de cambio de tema */
