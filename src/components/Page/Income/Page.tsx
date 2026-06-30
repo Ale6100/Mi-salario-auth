@@ -1,73 +1,43 @@
 // src\components\Page\Income\Page.tsx
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { createColumns } from "./columns";
-import { DataTable } from "@/components/utils/DataTable";
-import { DialogAddEditIncome } from "./DialogAddEditIncome";
-import { fetchDeleteConceptoIngresos } from "@/lib/fetch/conceptosIngresos";
-import { toast } from "sonner";
+import { Graph } from "./graph/Graph";
+import { Table } from "./table/Table";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useConceptosIngresos } from "@/hooks/useConceptosIngresos";
-import { useFuentesIngresos } from "@/hooks/useFuentesIngresos";
-import { useId, useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import AlertAction from "@/components/utils/AlertAction";
-import type { BtnAlertActionConfig } from "@/components/utils/AlertAction";
-import type { ConceptoIngresosDB } from "@/types/conceptosIngresos";
 
 export const IncomePage = () => {
-  const { user, getAccessTokenSilently } = useAuth0();
-
-  const toastId = useId();
-  const queryClient = useQueryClient();
+  const { user } = useAuth0();
 
   const { data, isFetching } = useConceptosIngresos({ user });
-  const { data: fuentesData, isFetching: isFetchingFuentes } = useFuentesIngresos({ user });
 
-  const [ sorting ] = useState([
-    {
-      id: 'periodo',
-      desc: true,
+  const graphContent = () => {
+    if (isFetching) {
+      return (
+        <div className="flex justify-center items-center">
+          <p className="text-muted-foreground text-sm">Cargando...</p>
+        </div>
+      );
     }
-  ]);
 
-  const [ isOpenAddEditDialog, setIsOpenAddEditDialog ] = useState<{ status: boolean, income: ConceptoIngresosDB | undefined }>({ status: false, income: undefined });
-  const [ isDeleteOpen, setIsDeleteOpen ] = useState({ status: false, id: "" });
-
-  const handleEdit = (income: ConceptoIngresosDB) => {
-    setIsOpenAddEditDialog({ status: true, income });
-  }
-
-  const handleDelete = (income: ConceptoIngresosDB) => {
-    setIsDeleteOpen({ status: true, id: income._id });
-  }
-
-  const configBtnAcceptDelete: BtnAlertActionConfig = {
-    onClick: async () => {
-      const token = await getAccessTokenSilently();
-      const id = isDeleteOpen.id;
-      if (!id || !token) return;
-
-      const ingreso = data?.find(item => item._id === id);
-      if (!ingreso) return;
-
-      toast.loading('Espere...', { id: toastId });
-      const response = await fetchDeleteConceptoIngresos({ id, token });
-
-      if (response.statusCode != 200) {
-        toast.error('Error al eliminar el ingreso', { id: toastId });
-        return;
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ['conceptos-ingreso'] });
-      toast.success("Ingreso eliminado correctamente", { id: toastId });
+    if (!data?.length) {
+      return (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-muted-foreground text-center">
+              Aún no tienes ingresos registrados.
+            </p>
+            <p className="text-muted-foreground text-center text-sm">
+              Agrega tu primer ingreso usando el botón <span className="font-medium">Agregar</span> en la tabla de abajo.
+            </p>
+          </CardContent>
+        </Card>
+      );
     }
-  }
 
-  const columns = useMemo(() => createColumns({ handleEdit, handleDelete, isFetching: isFetching || isFetchingFuentes }), [isFetching, isFetchingFuentes]);
-
-  const ButtonAddSource = <Button onClick={() => setIsOpenAddEditDialog({ status: true, income: undefined })} className="cursor-pointer" disabled={isFetchingFuentes || isFetching}>Agregar</Button>
+    return <Graph data={data} />;
+  };
 
   return (
     <section className="p-4 space-y-4">
@@ -77,22 +47,19 @@ export const IncomePage = () => {
         Aquí puedes gestionar tus ingresos mensuales
       </p>
 
-      <Card className='p-4 bg-card rounded-xl shadow-md'>
-        <DataTable columns={columns} data={data} dataLoading={isFetching} toolbarActions={[ButtonAddSource]} sorting={sorting} />
-      </Card>
+      <Separator className="my-6" />
 
-      {
-        isOpenAddEditDialog.status && <DialogAddEditIncome
-          isOpen={isOpenAddEditDialog}
-          setIsOpen={setIsOpenAddEditDialog}
-          actualIncomes={data}
-          fuentesData={fuentesData}
-        />
-      }
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight">Registro histórico</h2>
+        {graphContent()}
+      </section>
 
-      {
-        isDeleteOpen.status && <AlertAction isOpen={isDeleteOpen.status} onOpenChange={open => setIsDeleteOpen({ status: open, id: isDeleteOpen.id })} title="¿Estás seguro de que deseas eliminar este ingreso?" configBtnAccept={configBtnAcceptDelete} />
-      }
+      <Separator className="my-6" />
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight">Gestionar ingresos</h2>
+        <Table data={data} isFetching={isFetching} />
+      </section>
     </section>
   );
 }

@@ -1,4 +1,4 @@
-// src\components\Page\Income\columns.tsx
+// src\components\Page\Income\table\columns.tsx
 
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/utils/DataTableColumnHeader";
@@ -24,6 +24,13 @@ export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateCo
     accessorKey: 'id_fuente_ingreso',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fuente de ingreso" />,
     accessorFn: (row) => row.id_fuente_ingreso?.nombre || '-',
+    cell: ({ row }) => {
+      const nombre = row.original.id_fuente_ingreso?.nombre || '-';
+      const color = row.original.id_fuente_ingreso?.color;
+      return (
+        <p style={color ? { color } : undefined}>{nombre}</p>
+      )
+    }
   },
   {
     accessorKey: 'periodo',

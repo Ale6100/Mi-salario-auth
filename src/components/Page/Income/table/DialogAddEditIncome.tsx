@@ -1,4 +1,4 @@
-// src\components\Page\Income\DialogAddEditIncome.tsx
+// src\components\Page\Income\table\DialogAddEditIncome.tsx
 
 import { Button } from "@/components/ui/button";
 import { Controller, useForm } from "react-hook-form";
@@ -7,7 +7,9 @@ import { fetchPostConceptoIngresos, fetchPutConceptoIngresos } from "@/lib/fetch
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { formSchema, type FormSchema } from "./util";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router";
 import { MsgError } from "@/components/forms/MsgError";
+import { RUTAS } from "@/lib/const";
 import { toast } from "sonner";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useId, useMemo, type Dispatch, type SetStateAction } from "react";
@@ -16,6 +18,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import CustomReactSelect from "@/components/select/CustomReactSelect";
 import type { ConceptoIngresosDB, POSTConceptoIngresos, PUTConceptoIngresos } from "@/types/conceptosIngresos";
 import type { FuenteIngresosDB } from "@/types/fuentesIngresos";
+
+type FuenteOption = { value: string; label: string; color?: string };
+
+const formatFuenteOptionLabel = (option: FuenteOption) => (
+  <span className="flex items-center gap-2">
+    {option.color && <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: option.color }} />}
+    {option.label}
+  </span>
+);
 
 type DialogAddEditIncomeProps = {
   readonly isOpen: { status: boolean, income: ConceptoIngresosDB | undefined };
@@ -32,10 +43,15 @@ export const DialogAddEditIncome = ({ isOpen, setIsOpen, actualIncomes, fuentesD
 
   const optionsFuentes = useMemo(() => {
     return fuentesData
-      .toSorted((a, b) => a.activo === b.activo ? 0 : a.activo ? -1 : 1)
+      .toSorted((a, b) => {
+        if (a.activo && !b.activo) return -1;
+        if (!a.activo && b.activo) return 1;
+        return a.nombre.localeCompare(b.nombre);
+      })
       .map(fuente => ({
         value: fuente._id,
-        label: fuente.nombre
+        label: fuente.nombre,
+        color: fuente.color,
       }));
   }, [fuentesData]);
 
@@ -145,14 +161,30 @@ export const DialogAddEditIncome = ({ isOpen, setIsOpen, actualIncomes, fuentesD
                     <FieldLabel className="required">
                       Fuente de ingreso
                     </FieldLabel>
-                    <CustomReactSelect
-                      value={optionsFuentes.find(fuente => fuente.value === field.value) || null}
-                      onChange={(option) => field.onChange(option?.value || '')}
-                      options={optionsFuentes}
-                      placeholder="Seleccione una fuente de ingreso..."
-                      noOptionsMessage={() => "No hay fuentes de ingreso disponibles"}
-                      isClearable
-                    />
+                    {optionsFuentes.length === 0 ? (
+                      <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-input px-3 py-2">
+                        <span className="text-sm text-muted-foreground">
+                          No hay fuentes de ingreso
+                        </span>
+                        <Link
+                          to={RUTAS.configuration.incomeSources}
+                          onClick={close}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          Configurar
+                        </Link>
+                      </div>
+                    ) : (
+                      <CustomReactSelect
+                        value={optionsFuentes.find(fuente => fuente.value === field.value) || null}
+                        onChange={(option) => field.onChange(option?.value || '')}
+                        options={optionsFuentes}
+                        placeholder="Seleccione una fuente de ingreso..."
+                        noOptionsMessage={() => "No hay fuentes de ingreso disponibles"}
+                        isClearable
+                        formatOptionLabel={formatFuenteOptionLabel}
+                      />
+                    )}
                     <MsgError fieldState={fieldState} />
                   </Field>
                 )}

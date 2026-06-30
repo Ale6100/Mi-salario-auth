@@ -15,3 +15,13 @@ export const formatPrice = (value: number | undefined): string => {
     maximumFractionDigits: 2,
   }).format(value ?? 0);
 };
+
+export const formatCompactPrice = (value: number | undefined): string => {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    notation: "compact",
+    compactDisplay: "short",
+    maximumFractionDigits: 1,
+  }).format(value ?? 0);
+};

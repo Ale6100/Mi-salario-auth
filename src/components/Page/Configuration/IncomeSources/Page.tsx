@@ -71,7 +71,7 @@ export const IncomeSourcesPage = () => {
 
   return (
     <section className="p-4 space-y-4">
-      <h1 className="text-3xl max-sm:text-lg font-bold text-center">Fuentes de Ingreso</h1>
+      <h1 className="text-3xl max-sm:text-lg font-bold text-center">Fuentes de ingreso</h1>
 
       <p className="text-muted-foreground text-center text-sm max-w-md mx-auto">
         Aquí puedes gestionar tus fuentes de ingreso

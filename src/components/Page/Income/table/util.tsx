@@ -1,4 +1,4 @@
-// src\components\Page\Income\util.tsx
+// src\components\Page\Income\table\util.tsx
 
 import z from "zod";
 
