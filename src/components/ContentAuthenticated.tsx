@@ -1,6 +1,7 @@
 // src\components\ContentAuthenticated.tsx
 
 import { DashboardPage } from "./Page/Dashboard/Page";
+import { ExpenseSourcesPage } from "./Page/Configuration/ExpenseSources/Page";
 import { IncomePage } from "./Page/Income/Page";
 import { IncomeSourcesPage } from "./Page/Configuration/IncomeSources/Page";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -18,6 +19,7 @@ export const ContentAuthenticated = () => {
         <Route path={RUTAS.income} element={<IncomePage />} />
 
         <Route path={RUTAS.configuration.incomeSources} element={<IncomeSourcesPage />} />
+        <Route path={RUTAS.configuration.expenseSources} element={<ExpenseSourcesPage />} />
 
         <Route path="*" element={<ReportError redirect={RUTAS.dashboard} />} />
       </Routes>

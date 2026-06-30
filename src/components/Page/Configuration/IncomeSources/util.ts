@@ -1,4 +1,4 @@
-// src\components\Page\Configuration\IncomeSources\util.tsx
+// src\components\Page\Configuration\IncomeSources\util.ts
 
 import z from "zod";
 

@@ -9,12 +9,6 @@ export type FuenteIngresosDB = {
   color: string;
 };
 
-export type POSTFuenteIngresos = {
-  sub: string;
-  nombre: string;
-  activo: boolean;
-  aguinaldo: boolean;
-  color: string;
-}
+export type POSTFuenteIngresos = Omit<FuenteIngresosDB, "_id">;
 
-export type PUTFuenteIngresos = Omit<POSTFuenteIngresos, "sub">
+export type PUTFuenteIngresos = Omit<POSTFuenteIngresos, "sub">;

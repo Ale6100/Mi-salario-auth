@@ -32,7 +32,6 @@ type FetchPostFuenteIngresosParams = {
 type FetchPostFuenteIngresosResponse = ResponseBackend<FuenteIngresosDB>;
 
 export const fetchPostFuenteIngresos = async ({ token, data }: FetchPostFuenteIngresosParams) => {
-
   return await fetch(`${VITE_BACKEND_URL}/fuentes-ingresos`, {
     method: "POST",
     headers: {

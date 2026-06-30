@@ -1,6 +1,6 @@
 // src\components\Page\Income\Graph.tsx
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from "recharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart";
 import { formatCompactPrice } from "@/lib/utils";
@@ -90,6 +90,19 @@ export const Graph = ({ data }: GraphProps) => {
     return { chartConfig, chartData, sourceKeys };
   }, [data]);
 
+  const average12Months = useMemo(() => {
+    if (!chartData.length) return 0;
+    const last12 = chartData.slice(-12);
+    const totals = last12.map((d) => {
+      let sum = 0;
+      for (const key of sourceKeys) {
+        sum += (d[key] as number) || 0;
+      }
+      return sum;
+    });
+    return totals.reduce((a, b) => a + b, 0) / totals.length;
+  }, [chartData, sourceKeys]);
+
   if (!data?.length) {
     return null;
   }
@@ -126,6 +139,20 @@ export const Graph = ({ data }: GraphProps) => {
                 radius={0}
               />
             ))}
+            {average12Months > 0 && (
+              <ReferenceLine
+                y={average12Months}
+                stroke="currentColor"
+                className="text-muted-foreground/60"
+                strokeDasharray="5 5"
+                label={{
+                  value: `Prom. 12m: ${formatCompactPrice(average12Months)}`,
+                  position: "right",
+                  fill: "currentColor",
+                  fontSize: 12,
+                }}
+              />
+            )}
           </BarChart>
         </ChartContainer>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
