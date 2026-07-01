@@ -1,13 +1,12 @@
 export const RUTAS = {
   dashboard: "/",
   income: "/income",
-  estimatedExpenses: "/estimated-expenses",
-  trends: "/trends",
+  expenses: "/expenses",
   emergencyFund: "/emergency-fund",
+  reports: "/reports",
   configuration: {
     incomeSources: "/configuration/income-sources",
     expenseSources: "/configuration/expense-sources",
-    monthlyNotes: "/configuration/monthly-notes",
     dollarRate: "/configuration/dollar-rate",
   }
 }

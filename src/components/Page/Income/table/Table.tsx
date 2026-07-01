@@ -70,12 +70,12 @@ export const Table = ({ data, isFetching }: TableProps) => {
 
   const columns = useMemo(() => createColumns({ handleEdit, handleDelete, isFetching: isFetching || isFetchingFuentes }), [isFetching, isFetchingFuentes]);
 
-  const ButtonAddSource = <Button onClick={() => setIsOpenAddEditDialog({ status: true, income: undefined })} className="cursor-pointer" disabled={isFetchingFuentes || isFetching}>Agregar</Button>
+  const ButtonAddIncome = <Button onClick={() => setIsOpenAddEditDialog({ status: true, income: undefined })} className="cursor-pointer" disabled={isFetchingFuentes || isFetching}>Agregar</Button>
 
   return (
     <>
     <Card className='p-4 bg-card rounded-xl shadow-md'>
-      <DataTable columns={columns} data={data} dataLoading={isFetching} toolbarActions={[ButtonAddSource]} sorting={sorting} />
+      <DataTable columns={columns} data={data} dataLoading={isFetching} toolbarActions={[ButtonAddIncome]} sorting={sorting} />
     </Card>
 
     {

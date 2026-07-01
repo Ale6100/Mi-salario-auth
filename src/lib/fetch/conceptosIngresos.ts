@@ -7,16 +7,20 @@ const { VITE_BACKEND_URL } = import.meta.env;
 
 type FetchGetConceptosIngresosParams = {
   sub: string;
+  periodo?: string;
   token: string;
   signal?: AbortSignal;
 }
 
 type FetchGetConceptosIngresosResponse = ResponseBackend<ConceptoIngresosDB[]>;
 
-export const fetchConceptosIngresos = async ({ sub, token, signal }: FetchGetConceptosIngresosParams) => {
-  const queryString = new URLSearchParams({ sub }).toString();
+export const fetchConceptosIngresos = async ({ sub, periodo, token, signal }: FetchGetConceptosIngresosParams) => {
+  const query = new URLSearchParams({ sub });
+  if (periodo) {
+    query.set("periodo", periodo);
+  }
 
-  return await fetch(`${VITE_BACKEND_URL}/conceptos-ingresos?${queryString}`, {
+  return await fetch(`${VITE_BACKEND_URL}/conceptos-ingresos?${query.toString()}`, {
     headers: {
       "Authorization": `Bearer ${token}`,
     },

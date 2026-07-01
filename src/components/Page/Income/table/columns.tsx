@@ -16,11 +16,6 @@ type CreateColumnsProps = {
 
 export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateColumnsProps): ColumnDef<ConceptoIngresosDB>[] => [
   {
-    accessorKey: 'valor',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Valor" />,
-    accessorFn: (row) => formatPrice(row.valor) || '-',
-  },
-  {
     accessorKey: 'id_fuente_ingreso',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fuente de ingreso" />,
     accessorFn: (row) => row.id_fuente_ingreso?.nombre || '-',
@@ -31,6 +26,11 @@ export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateCo
         <p style={color ? { color } : undefined}>{nombre}</p>
       )
     }
+  },
+  {
+    accessorKey: 'valor',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Valor" />,
+    accessorFn: (row) => formatPrice(row.valor),
   },
   {
     accessorKey: 'periodo',

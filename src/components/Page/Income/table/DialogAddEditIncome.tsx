@@ -18,15 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import CustomReactSelect from "@/components/select/CustomReactSelect";
 import type { ConceptoIngresosDB, POSTConceptoIngresos, PUTConceptoIngresos } from "@/types/conceptosIngresos";
 import type { FuenteIngresosDB } from "@/types/fuentesIngresos";
-
-type FuenteOption = { value: string; label: string; color?: string };
-
-const formatFuenteOptionLabel = (option: FuenteOption) => (
-  <span className="flex items-center gap-2">
-    {option.color && <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: option.color }} />}
-    {option.label}
-  </span>
-);
+import { FormatFuenteOptionLabel } from "@/components/select/FormatFuenteOptionLabel";
 
 type DialogAddEditIncomeProps = {
   readonly isOpen: { status: boolean, income: ConceptoIngresosDB | undefined };
@@ -73,7 +65,7 @@ export const DialogAddEditIncome = ({ isOpen, setIsOpen, actualIncomes, fuentesD
 
     const existingIncome = actualIncomes.find(income => income.id_fuente_ingreso._id === data.fuente_ingreso && income.periodo === data.periodo);
     if (existingIncome) {
-      return form.setError("periodo", { type: "manual", message: "Ya existe un ingreso para esta fuente y periodo" });
+      return form.setError("periodo", { type: "manual", message: "Ya existe un ingreso para esta fuente en el periodo seleccionado" });
     }
 
     const dataToSend: POSTConceptoIngresos = {
@@ -107,7 +99,7 @@ export const DialogAddEditIncome = ({ isOpen, setIsOpen, actualIncomes, fuentesD
     if (isOpen.income.id_fuente_ingreso._id !== data.fuente_ingreso || isOpen.income.periodo !== data.periodo) {
       const existingIncome = actualIncomes.find(income => income.id_fuente_ingreso._id === data.fuente_ingreso && income.periodo === data.periodo);
       if (existingIncome) {
-        return form.setError("periodo", { type: "manual", message: "Ya existe un ingreso para esta fuente y periodo" });
+        return form.setError("periodo", { type: "manual", message: "Ya existe un ingreso para esta fuente en el periodo seleccionado" });
       }
     }
 
@@ -182,10 +174,20 @@ export const DialogAddEditIncome = ({ isOpen, setIsOpen, actualIncomes, fuentesD
                         placeholder="Seleccione una fuente de ingreso..."
                         noOptionsMessage={() => "No hay fuentes de ingreso disponibles"}
                         isClearable
-                        formatOptionLabel={formatFuenteOptionLabel}
+                        formatOptionLabel={FormatFuenteOptionLabel}
                       />
                     )}
                     <MsgError fieldState={fieldState} />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        ¿No encontrás la fuente que buscás? Podés{" "}
+                        <Link
+                          to={RUTAS.configuration.incomeSources}
+                          onClick={close}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          agregarla en configuración
+                        </Link>
+                      </p>
                   </Field>
                 )}
               />

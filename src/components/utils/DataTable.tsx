@@ -41,7 +41,7 @@ interface DataTableProps<TData , TValue> {
  * @param {string} [props.txtPlaceholderFilter="Filtrar..."] - Texto del placeholder para el input de filtro global.
  * @param {Array<Extract<keyof TData, string>>} [props.columnsHidden=[]] - Columnas inicialmente ocultas.
  * @param {boolean} [props.dataLoading=false] - Indica si los datos se están cargando.
- * @param {number} [props.pageSize=10] - Número de filas por página.
+ * @param {number} [props.pageSize=20] - Número de filas por página.
  * @param {string} [props.cantPaginasAlrededor='2'] - Cantidad de páginas alrededor de la página actual a mostrar en la paginación.
  * @param {number[]} [props.registrosRemarcados=[]] - Lista de IDs de registros que se destacarán en la tabla. Para que esta funcionalidad sea efectiva los datos deben incluir una propiedad id.
  * @param {SortingState} [props.sorting=[]] - Estado inicial de la ordenación de las columnas.
@@ -52,7 +52,7 @@ interface DataTableProps<TData , TValue> {
  *
  * @returns {JSX.Element} - Componente de tabla interactivo.
  */
-export function DataTable<TData extends object, TValue>({ className, columns, data, Card, txtPlaceholderFilter = "Filtrar...", columnsHidden = [], dataLoading = false, pageSize = 10, cantPaginasAlrededor = '2', registrosRemarcados = [], sorting = [], sortingFns = {}, minWidthTable = 1024, multiFilterButton, toolbarActions = [] }: Readonly<DataTableProps<TData, TValue>>): JSX.Element {
+export function DataTable<TData extends object, TValue>({ className, columns, data, Card, txtPlaceholderFilter = "Filtrar...", columnsHidden = [], dataLoading = false, pageSize = 20, cantPaginasAlrededor = '2', registrosRemarcados = [], sorting = [], sortingFns = {}, minWidthTable = 1024, multiFilterButton, toolbarActions = [] }: Readonly<DataTableProps<TData, TValue>>): JSX.Element {
   const [ sortingData, setSortingData ] = useState<SortingState>(sorting)
   const [ columnVisibility, setColumnVisibility ] = useState<VisibilityState>(columnsHidden.reduce((acc, column) => ({ ...acc, [column]: false }), {}))
   const [ filtering, setFiltering ] = useState<string>("")

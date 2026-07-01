@@ -13,20 +13,21 @@ type UseConceptosIngresosResult = Omit<UseQueryResult<ConceptoIngresosDB[]>, "da
 
 type UseConceptosIngresosParams = {
   user?: User;
+  periodo?: string;
 }
 
-export const useConceptosIngresos = ({ user }: UseConceptosIngresosParams = {}): UseConceptosIngresosResult => {
+export const useConceptosIngresos = ({ user, periodo }: UseConceptosIngresosParams = {}): UseConceptosIngresosResult => {
   const { getAccessTokenSilently } = useAuth0();
 
   const query = useQuery<ConceptoIngresosDB[]>({
-    queryKey: ["conceptos-ingreso", user],
+    queryKey: ["conceptos-ingreso", user, periodo],
     queryFn: async ({ signal }) => {
       if (!user?.sub) return EMPTY_CONCEPTOS_INGRESOS;
 
       const token = await getAccessTokenSilently();
       if (!token) return EMPTY_CONCEPTOS_INGRESOS;
 
-      const response = await fetchConceptosIngresos({ sub: user.sub, token, signal });
+      const response = await fetchConceptosIngresos({ sub: user.sub, periodo, token, signal });
       return response.data || EMPTY_CONCEPTOS_INGRESOS;
     },
     initialData: EMPTY_CONCEPTOS_INGRESOS,

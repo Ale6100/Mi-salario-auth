@@ -3,7 +3,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Wallet, CreditCard, TrendingUp, Shield, List, ClipboardList, FileText, DollarSign, LogOut, User } from "lucide-react"
+import { LayoutDashboard, Wallet, CreditCard, Shield, List, ClipboardList, DollarSign, LogOut, User, BarChart3 } from "lucide-react"
 import { Link, useLocation } from "react-router"
 import { ModeToggle } from "@/context/ModeToggle"
 import { RUTAS } from "@/lib/const"
@@ -14,15 +14,14 @@ import { useAuth0 } from "@auth0/auth0-react"
 const mainNavItems = [
   { title: "Dashboard", url: RUTAS.dashboard, icon: LayoutDashboard },
   { title: "Ingresos", url: RUTAS.income, icon: Wallet },
-  { title: "Gastos estimados", url: RUTAS.estimatedExpenses, icon: CreditCard },
-  { title: "Evolución", url: RUTAS.trends, icon: TrendingUp },
+  { title: "Gastos", url: RUTAS.expenses, icon: CreditCard },
   { title: "Fondo de emergencia", url: RUTAS.emergencyFund, icon: Shield },
+  { title: "Reportes", url: RUTAS.reports, icon: BarChart3 },
 ] as const
 
 const configNavItems = [
   { title: "Fuentes de ingreso", url: RUTAS.configuration.incomeSources, icon: List },
   { title: "Fuentes de gastos", url: RUTAS.configuration.expenseSources, icon: ClipboardList },
-  { title: "Aclaraciones mensuales", url: RUTAS.configuration.monthlyNotes, icon: FileText },
   { title: "Precio dólar", url: RUTAS.configuration.dollarRate, icon: DollarSign },
 ] as const
 
