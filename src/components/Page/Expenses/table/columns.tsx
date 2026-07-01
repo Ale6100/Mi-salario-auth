@@ -1,12 +1,12 @@
 // src\components\Page\Expenses\table\columns.tsx
 
-import { DataTableColumnHeader } from "@/components/utils/DataTableColumnHeader";
-import { cn, formatPrice } from "@/lib/utils";
-import type { ConceptoGastosDB } from "@/types/conceptosGastos";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { cn, formatPrice } from "@/lib/utils";
+import { DataTableColumnHeader } from "@/components/utils/DataTableColumnHeader";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Settings2 } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { ConceptoGastosDB } from "@/types/conceptosGastos";
 
 type CreateColumnsProps = {
   readonly handleEdit: (fuente: ConceptoGastosDB) => void;
@@ -36,10 +36,18 @@ export const createColumns = ({ handleEdit, handleDelete, handleEditMontoReal, i
   {
     accessorKey: 'monto_real',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Monto real" />,
-    accessorFn: (row) => formatPrice(row.monto_real),
+    accessorFn: (row) => row.monto_real == null ? '' : formatPrice(row.monto_real),
     cell: ({ row }) => {
       const aclaracion = row.original.aclaracion;
-      return <span title={`${aclaracion ?? ''}`} className={cn(aclaracion ? 'cursor-help' : '')}>{formatPrice(row.original.monto_real)}</span>;
+      const montoReal = row.original.monto_real;
+      if (montoReal == null) {
+        return (
+          <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            Pendiente
+          </span>
+        );
+      }
+      return <span title={`${aclaracion ?? ''}`} className={cn(aclaracion ? 'cursor-help' : '')}>{formatPrice(montoReal)}</span>;
     }
   },
   {
@@ -48,7 +56,10 @@ export const createColumns = ({ handleEdit, handleDelete, handleEditMontoReal, i
     cell: ({ row }) => {
       const montoReal = row.original.monto_real;
       const montoEstimado = row.original.columnaMonto;
-      if (montoReal == null || montoEstimado == null) return <span>-</span>;
+      if (montoReal == null) {
+        return <span className="text-muted-foreground">—</span>;
+      }
+      if (montoEstimado == null) return <span>-</span>;
       const diferencia = montoEstimado - montoReal;
       return (
         <span className={cn(diferencia >= 0 ? 'text-primary' : 'text-destructive')}>

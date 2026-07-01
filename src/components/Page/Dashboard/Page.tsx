@@ -1,10 +1,306 @@
 // src\components\Page\Dashboard\Page.tsx
 
+import { Card, CardContent } from "@/components/ui/card";
+import { formatPrice } from "@/lib/utils";
+import { Link } from "react-router";
+import { RUTAS } from "@/lib/const";
+import { Separator } from "@/components/ui/separator";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useConceptosGastos } from "@/hooks/useConceptosGastos";
+import { useConceptosIngresos } from "@/hooks/useConceptosIngresos";
+import { useFondoEmergencia } from "@/hooks/useFondoEmergencia";
+import { useMemo } from "react";
+import { Wallet, CreditCard, Shield, PiggyBank, TrendingUp, TrendingDown, ArrowRight, AlertTriangle, CalendarDays } from "lucide-react";
+
 export const DashboardPage = () => {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-6">
-      <h1 className="text-3xl font-bold">Bienvenido a Mi salario</h1>
-      <p className="text-muted-foreground">Página en desarrollo</p>
-    </div>
+  const { user } = useAuth0();
+
+  const now = useMemo(() => new Date(), []);
+  const currentPeriod = useMemo(() => {
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    return `${y}-${m}`;
+  }, [now]);
+
+  const dayOfMonth = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const mesTranscurrido = dayOfMonth / daysInMonth;
+
+  const { data: ingresos, isFetching: isFetchingIngresos } = useConceptosIngresos({
+    user,
+    periodo: currentPeriod,
+  });
+  const { data: gastos, isFetching: isFetchingGastos } = useConceptosGastos({
+    user,
+    periodo: currentPeriod,
+  });
+  const { data: fondo, isFetching: isFetchingFondo } = useFondoEmergencia({ user });
+
+  const ingresosTotales = useMemo(() => {
+    if (!ingresos?.length) return 0;
+    return ingresos.reduce((sum, ing) => sum + ing.valor, 0);
+  }, [ingresos]);
+
+  const gastosTotales = useMemo(() => {
+    if (!gastos?.length) return 0;
+    return gastos.reduce((sum, gas) => sum + gas.columnaMonto, 0);
+  }, [gastos]);
+
+  const excedente = Math.max(0, ingresosTotales - gastosTotales);
+  const aporteFondo = fondo ? excedente * (fondo.porcentaje_total / 100) : 0;
+  const balance = ingresosTotales - gastosTotales - aporteFondo;
+  const balanceSinFondo = ingresosTotales - gastosTotales;
+
+  const balanceAlDia = balance >= 0
+    ? balance * (daysInMonth - dayOfMonth) / daysInMonth
+    : 0;
+
+  const monthName = useMemo(
+    () => now.toLocaleDateString("es-AR", { month: "long" }),
+    [now],
   );
-}
+  const year = now.getFullYear();
+
+  const isFetching = isFetchingIngresos || isFetchingGastos || isFetchingFondo;
+
+  if (isFetching) {
+    return (
+      <section className="p-4 space-y-4">
+        <h1 className="text-3xl max-sm:text-lg font-bold text-center">Dashboard</h1>
+        <div className="flex justify-center items-center py-12">
+          <p className="text-muted-foreground">Cargando resumen financiero…</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="p-4 space-y-4">
+      <h1 className="text-3xl max-sm:text-lg font-bold text-center">Dashboard</h1>
+      <p className="text-muted-foreground text-center text-sm max-w-md mx-auto">
+        Resumen financiero de {monthName} {year}
+      </p>
+
+      <Separator className="my-6" />
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight">Resumen del mes</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="flex flex-col justify-between h-full">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                    <TrendingUp className="size-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Ingresos
+                  </span>
+                </div>
+                <Wallet className="size-4 text-muted-foreground/30" />
+              </div>
+              <p className="text-2xl font-bold tracking-tight">
+                {formatPrice(ingresosTotales)}
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Total de ingresos registrados en {monthName}.
+              </p>
+              <Link
+                to={RUTAS.income}
+                className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+              >
+                Ver detalle de ingresos <ArrowRight className="size-3" />
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="flex flex-col justify-between h-full">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
+                    <TrendingDown className="size-4 text-red-600 dark:text-red-400" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Gastos
+                  </span>
+                </div>
+                <CreditCard className="size-4 text-muted-foreground/30" />
+              </div>
+              <p className="text-2xl font-bold tracking-tight">
+                {formatPrice(gastosTotales)}
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Total de gastos estimados para {monthName}.
+              </p>
+              <Link
+                to={RUTAS.expenses}
+                className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+              >
+                Ver detalle de gastos <ArrowRight className="size-3" />
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="flex flex-col justify-between h-full">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <Shield className="size-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Aporte a fondo
+                  </span>
+                </div>
+                <PiggyBank className="size-4 text-muted-foreground/30" />
+              </div>
+              <p className="text-2xl font-bold tracking-tight">
+                {fondo ? formatPrice(aporteFondo) : "—"}
+              </p>
+              {fondo ? (
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {fondo.porcentaje_total.toFixed(2)}% del excedente mensual destinado al{" "}
+                  fondo de emergencia.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Aún no configuraste un fondo de emergencia.
+                </p>
+              )}
+              <Link
+                to={RUTAS.emergencyFund}
+                className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {fondo ? "Ajustar configuración" : "Configurar fondo"}{" "}
+                <ArrowRight className="size-3" />
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <Separator className="my-6" />
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight">Balance proyectado</h2>
+
+        <Card>
+          <CardContent className="pt-5 pb-5 space-y-5">
+            <div className="flex items-center gap-3">
+              <div
+                className={
+                  `p-2.5 rounded-xl ${
+                    balance >= 0
+                      ? "bg-amber-100 dark:bg-amber-900/30"
+                      : "bg-red-100 dark:bg-red-900/30"
+                  }`
+                }
+              >
+                {balance >= 0 ? (
+                  <PiggyBank className="size-5 text-amber-600 dark:text-amber-400" />
+                ) : (
+                  <AlertTriangle className="size-5 text-red-600 dark:text-red-400" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-base font-semibold">Balance del mes</h3>
+                <p className="text-xs text-muted-foreground">
+                  Proyección al cierre del mes según los datos registrados
+                </p>
+              </div>
+            </div>
+
+            <div className="text-center py-2">
+              <p className="text-4xl sm:text-5xl font-bold tracking-tight">
+                {formatPrice(balance)}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1.5">
+                {balance >= 0
+                  ? "Disponible después de aportes"
+                  : "Déficit en el mes"}
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2.5 text-sm max-w-sm mx-auto">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Ingresos</span>
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  +{formatPrice(ingresosTotales)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Gastos</span>
+                <span className="font-medium text-red-600 dark:text-red-400">
+                  &minus;{formatPrice(gastosTotales)}
+                </span>
+              </div>
+              {fondo && aporteFondo > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Aporte a fondo de emergencia</span>
+                  <span className="font-medium text-blue-600 dark:text-blue-400">
+                    &minus;{formatPrice(aporteFondo)}
+                  </span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between items-center text-base font-bold">
+                <span>Balance</span>
+                <span
+                  className={
+                    balance >= 0 ? "text-foreground" : "text-red-500"
+                  }
+                >
+                  {formatPrice(balance)}
+                </span>
+              </div>
+            </div>
+
+            {fondo && aporteFondo > 0 && (
+              <div className="bg-muted/60 rounded-lg px-4 py-3">
+                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                  Sin aportar al fondo de emergencia, el balance sería de{" "}
+                  <span className="font-semibold text-foreground">{formatPrice(balanceSinFondo)}</span>.
+                </p>
+              </div>
+            )}
+
+            <div className="bg-muted/40 rounded-lg px-4 py-3.5 space-y-2.5">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <CalendarDays className="size-3.5" />
+                  Día {dayOfMonth} de {daysInMonth}
+                </span>
+                <span>{Math.round(mesTranscurrido * 100)}% del mes</span>
+              </div>
+
+              <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted-foreground/15">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-muted-foreground/40 transition-all"
+                  style={{ width: `${mesTranscurrido * 100}%` }}
+                />
+              </div>
+
+              {balance >= 0 && (
+                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                  Al día de hoy deberías contar con aproximadamente{" "}
+                  <span className="font-semibold text-foreground">{formatPrice(balanceAlDia)}</span>{" "}
+                  para cubrir el resto del mes.
+                </p>
+              )}
+              {balance < 0 && (
+                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                  Con los datos actuales, el mes cierra con déficit. Revisá tus gastos o ingresos
+                  para equilibrar la balanza.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+    </section>
+  );
+};

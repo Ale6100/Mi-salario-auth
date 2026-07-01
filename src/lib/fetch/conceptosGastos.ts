@@ -7,16 +7,20 @@ const { VITE_BACKEND_URL } = import.meta.env;
 
 type FetchGetConceptosGastosParams = {
   sub: string;
+  periodo?: string;
   token: string;
   signal?: AbortSignal;
 }
 
 type FetchGetConceptosGastosResponse = ResponseBackend<ConceptoGastosDB[]>;
 
-export const fetchConceptosGastos = async ({ sub, token, signal }: FetchGetConceptosGastosParams) => {
-  const queryString = new URLSearchParams({ sub }).toString();
+export const fetchConceptosGastos = async ({ sub, periodo, token, signal }: FetchGetConceptosGastosParams) => {
+  const query = new URLSearchParams({ sub });
+  if (periodo) {
+    query.set("periodo", periodo);
+  }
 
-  return await fetch(`${VITE_BACKEND_URL}/conceptos-gastos?${queryString}`, {
+  return await fetch(`${VITE_BACKEND_URL}/conceptos-gastos?${query.toString()}`, {
     headers: {
       "Authorization": `Bearer ${token}`,
     },

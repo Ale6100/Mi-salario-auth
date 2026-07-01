@@ -1,26 +1,27 @@
 // src\components\Page\Expenses\table\DialogAddEditExpense.tsx
 
-import type { ConceptoGastosDB, POSTConceptoGastos, PUTConceptoGastos } from "@/types/conceptosGastos";
-import type { FuenteGastosDB } from "@/types/fuentesGastos";
-import { useId, useMemo, type Dispatch, type SetStateAction } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useAuth0 } from "@auth0/auth0-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import { Controller, useForm } from "react-hook-form";
-import { formSchema, type FormSchema } from "./util";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { fetchPostConceptoGastos, fetchPutConceptoGastos } from "@/lib/fetch/conceptosGastos";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Link } from "react-router";
-import { RUTAS } from "@/lib/const";
-import CustomReactSelect from "@/components/select/CustomReactSelect";
+import { format } from "date-fns";
 import { FormatFuenteOptionLabel } from "@/components/select/FormatFuenteOptionLabel";
-import { MsgError } from "@/components/forms/MsgError";
+import { formSchema, type FormSchema } from "./util";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Link } from "react-router";
+import { MsgError } from "@/components/forms/MsgError";
+import { RUTAS } from "@/lib/const";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { fetchPostConceptoGastos, fetchPutConceptoGastos } from "@/lib/fetch/conceptosGastos";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useId, useMemo, type Dispatch, type SetStateAction } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import CustomReactSelect from "@/components/select/CustomReactSelect";
+import type { ConceptoGastosDB, POSTConceptoGastos, PUTConceptoGastos } from "@/types/conceptosGastos";
+import type { FuenteGastosDB } from "@/types/fuentesGastos";
 
 type DialogAddEditExpenseProps = {
   readonly isOpen: { status: boolean, expense: ConceptoGastosDB | undefined };
@@ -49,13 +50,15 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
       }));
   }, [fuentesData]);
 
+  const currentMonth = format(new Date(), "yyyy-MM");
+
   const isEdit = isOpen.expense != null;
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       fuente_gasto: isEdit ? isOpen.expense?.id_fuente_gasto?._id ?? "" : "",
-      periodo: isEdit ? isOpen.expense?.periodo ?? "" : "",
+      periodo: isEdit ? isOpen.expense?.periodo ?? "" : currentMonth,
       monto_estimado: isEdit && isOpen.expense?.monto_estimado != null ? isOpen.expense.monto_estimado.toString() : "",
       modo_porcentaje: isEdit ? isOpen.expense?.porcentaje_total != null : false,
       porcentaje: isEdit && isOpen.expense?.porcentaje_total != null ? isOpen.expense.porcentaje_total.toString() : "1",

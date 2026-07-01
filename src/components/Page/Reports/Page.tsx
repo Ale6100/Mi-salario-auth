@@ -1,14 +1,16 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// src\components\Page\Reports\Page.tsx
+
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Download, FileText, History } from "lucide-react";
+import { formatPrice } from "@/lib/utils";
+import { generateReport, generateFullReport } from "./util";
 import { Separator } from "@/components/ui/separator";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useConceptosGastos } from "@/hooks/useConceptosGastos";
 import { useConceptosIngresos } from "@/hooks/useConceptosIngresos";
-import CustomReactSelect from "@/components/select/CustomReactSelect";
-import { Download, FileText, History } from "lucide-react";
 import { useMemo, useState } from "react";
-import { generateReport, generateFullReport } from "./util";
-import { formatPrice } from "@/lib/utils";
+import CustomReactSelect from "@/components/select/CustomReactSelect";
 
 const MONTHS = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -41,18 +43,19 @@ export const ReportsPage = () => {
 
   const { data: allExpenses, isFetching: isFetchingExpenses } = useConceptosGastos({ user });
   const { data: allIncomes, isFetching: isFetchingAllIncomes } = useConceptosIngresos({ user });
-  const { data: incomes, isFetching: isFetchingIncomes } = useConceptosIngresos({
-    user,
-    periodo: `${selectedYear}-${selectedMonth}`,
-  });
 
   const filteredExpenses = useMemo(() => {
     const periodo = `${selectedYear}-${selectedMonth}`;
     return allExpenses.filter((exp) => exp.periodo === periodo);
   }, [allExpenses, selectedYear, selectedMonth]);
 
+  const filteredIncomes = useMemo(() => {
+    const periodo = `${selectedYear}-${selectedMonth}`;
+    return allIncomes.filter((inc) => inc.periodo === periodo);
+  }, [allIncomes, selectedYear, selectedMonth]);
+
   const reportData = useMemo(() => {
-    const incomesData = incomes.map((inc) => ({
+    const incomesData = filteredIncomes.map((inc) => ({
       fuente: inc.id_fuente_ingreso?.nombre ?? "Sin fuente",
       valor: inc.valor,
     }));
@@ -66,7 +69,7 @@ export const ReportsPage = () => {
     }));
 
     return { incomesData, expensesData };
-  }, [incomes, filteredExpenses]);
+  }, [filteredIncomes, filteredExpenses]);
 
   const fullReportPeriods = useMemo(() => {
     const expensePeriods = new Set(allExpenses.map((e) => e.periodo));
@@ -111,7 +114,7 @@ export const ReportsPage = () => {
     [reportData.expensesData],
   );
 
-  const isFetching = isFetchingExpenses || isFetchingIncomes || isFetchingAllIncomes;
+  const isFetching = isFetchingExpenses || isFetchingAllIncomes;
 
   const handleDownload = () => {
     const text = generateReport({
