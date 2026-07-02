@@ -9,9 +9,12 @@ import { Separator } from "./components/ui/separator";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "./components/ui/sidebar";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { useAuth0 } from "@auth0/auth0-react";
+import { useCookies } from 'react-cookie';
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth0();
+  const [cookies] = useCookies(['sidebar_state'])
+  const defaultOpen = Boolean(cookies.sidebar_state);
 
   if (isLoading) {
     return (
@@ -39,14 +42,14 @@ function App() {
   return (
     <BrowserRouter>
       <TooltipProvider>
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={defaultOpen}>
           <AppSidebar />
           <SidebarInset>
             <header className="flex h-14 shrink-0 items-center gap-2 border-b md:hidden">
               <div className="flex items-center gap-2 px-4">
                 <SidebarTrigger />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-                <span className="text-sm font-semibold">Mi Salario</span>
+                <Separator orientation="vertical" className="mr-2 h-8" />
+                <span className="text-sm font-semibold">Mi salario</span>
               </div>
             </header>
             <ContentAuthenticated />

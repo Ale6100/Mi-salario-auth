@@ -3,12 +3,12 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Wallet, CreditCard, Shield, List, ClipboardList, DollarSign, LogOut, User, BarChart3 } from "lucide-react"
+import { LayoutDashboard, Wallet, CreditCard, Shield, List, ClipboardList, LogOut, User, BarChart3 } from "lucide-react"
 import { Link, useLocation } from "react-router"
 import { ModeToggle } from "@/context/ModeToggle"
 import { RUTAS } from "@/lib/const"
 import { Separator } from "@/components/ui/separator"
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail } from "@/components/ui/sidebar"
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth0 } from "@auth0/auth0-react"
 
 const mainNavItems = [
@@ -22,7 +22,6 @@ const mainNavItems = [
 const configNavItems = [
   { title: "Fuentes de ingreso", url: RUTAS.configuration.incomeSources, icon: List },
   { title: "Fuentes de gastos", url: RUTAS.configuration.expenseSources, icon: ClipboardList },
-  { title: "Precio dólar", url: RUTAS.configuration.dollarRate, icon: DollarSign },
 ] as const
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -32,6 +31,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar variant="sidebar" collapsible="icon" {...props}>
       <SidebarHeader>
+        <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
+          <SidebarTrigger className="cursor-e-resize" />
+          <ModeToggle />
+        </div>
+        <div className="hidden group-data-[collapsible=icon]:flex justify-center">
+          <SidebarTrigger className="cursor-w-resize" />
+        </div>
+
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -63,7 +70,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupLabel>Principal</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
@@ -85,7 +92,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupLabel>Configuración</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {configNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
@@ -107,9 +114,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter>
         <Separator />
-        <div className="flex items-center justify-between px-2 py-1.5">
-          <div className="flex items-center gap-2 truncate">
-            <div className="flex size-7 items-center justify-center rounded-full bg-muted overflow-hidden">
+        <div className="flex items-center justify-between px-2 py-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:px-0">
+          <div className="flex items-center gap-2 truncate group-data-[collapsible=icon]:hidden">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted overflow-hidden">
               {user?.picture ? (
                 <img
                   src={user.picture}
@@ -124,21 +131,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {user?.name || user?.email || "Usuario"}
             </span>
           </div>
-          <ModeToggle />
+          <Button
+            variant="destructive"
+            size="icon-sm"
+            className="cursor-pointer shrink-0"
+            onClick={() =>
+              logout({
+                logoutParams: { returnTo: globalThis.location.origin },
+              })
+            }
+            title="Cerrar sesión"
+          >
+            <LogOut className="size-4" />
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 cursor-pointer"
-          onClick={() =>
-            logout({
-              logoutParams: { returnTo: globalThis.location.origin },
-            })
-          }
-        >
-          <LogOut className="size-4" />
-          <span>Cerrar Sesión</span>
-        </Button>
       </SidebarFooter>
 
       <SidebarRail />

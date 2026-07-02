@@ -1,3 +1,5 @@
+// src\lib\const.ts
+
 export const RUTAS = {
   dashboard: "/",
   income: "/income",
@@ -7,6 +9,5 @@ export const RUTAS = {
   configuration: {
     incomeSources: "/configuration/income-sources",
     expenseSources: "/configuration/expense-sources",
-    dollarRate: "/configuration/dollar-rate",
   }
 }

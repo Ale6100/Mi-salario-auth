@@ -160,7 +160,7 @@ export const ReportsPage = () => {
 
       <Separator className="my-6" />
 
-      <Card className="max-w-lg mx-auto">
+      <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <FileText className="size-5" />
@@ -208,7 +208,7 @@ export const ReportsPage = () => {
       </Card>
 
       {fullReportPeriods.length > 1 && (
-        <Card className="max-w-lg mx-auto">
+        <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <History className="size-5" />
