@@ -8,17 +8,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js 24
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
 
-      - name: Run comprehensive linting
+      - name: Run linting
         run: npm run lint:all
+
+      - name: Send whatsApp notification on failure
+        if: failure()
+        env:
+          PHONE: ${{ secrets.WHATSAPP_PHONE }}
+          API_KEY: ${{ secrets.WHATSAPP_API_KEY }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          MESSAGE="⚠️ *GitHub Actions:* El linter falló en la rama *${BRANCH}*. Revisá los logs del repositorio."
+
+          ENCODED_MESSAGE=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$MESSAGE'''))")
+
+          curl -s -X GET "https://api.callmebot.com/whatsapp.php?phone=${PHONE}&text=${ENCODED_MESSAGE}&apikey=${API_KEY}"
