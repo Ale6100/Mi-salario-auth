@@ -9,7 +9,7 @@ import { Separator } from "./components/ui/separator";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "./components/ui/sidebar";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useCoo testeando a ver si funca el workflow lint.yml kies } from 'react-cookie';
+import { useCookies } from 'react-cookie';
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth0();
