@@ -18,17 +18,29 @@ jobs:
       - run: npm ci
 
       - name: Run linting
+        id: run_lint
+        continue-on-error: true
         run: npm run lint:all
 
       - name: Send whatsApp notification on failure
-        if: failure()
+        if: steps.run_lint.outcome == 'failure'
         env:
           PHONE: ${{ secrets.WHATSAPP_PHONE }}
           API_KEY: ${{ secrets.WHATSAPP_API_KEY }}
           BRANCH: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          MESSAGE="⚠️ *GitHub Actions:* El linter falló en la rama *${BRANCH}*. Revisá los logs del repositorio."
+          REPO_NAME=$(echo "$REPO" | cut -d'/' -f2)
+
+          MESSAGE="⚠️ *ATENCIÓN:* Falló el linter del proyecto *${REPO_NAME}*.
+
+          Rama: ${BRANCH}
+
+          📋 *Logs:* ${RUN_URL}"
 
           ENCODED_MESSAGE=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$MESSAGE'''))")
 
           curl -s -X GET "https://api.callmebot.com/whatsapp.php?phone=${PHONE}&text=${ENCODED_MESSAGE}&apikey=${API_KEY}"
+
+          exit 1
