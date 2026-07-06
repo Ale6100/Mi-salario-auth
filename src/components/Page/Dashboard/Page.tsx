@@ -42,7 +42,7 @@ export const DashboardPage = () => {
 
   const gastosTotales = useMemo(() => {
     if (!gastos?.length) return 0;
-    return gastos.reduce((sum, gas) => sum + gas.columnaMonto, 0);
+    return gastos.reduce((sum, gas) => sum + (gas.monto ?? 0), 0);
   }, [gastos]);
 
   const excedente = Math.max(0, ingresosTotales - gastosTotales);

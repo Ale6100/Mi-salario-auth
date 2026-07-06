@@ -2,7 +2,7 @@
 
 import { AppSidebar } from "./components/sidebar/AppSidebar";
 import { BrowserRouter } from "react-router";
-// import { ContentAuthenticated } from "./components/ContentAuthenticated";
+import { ContentAuthenticated } from "./components/ContentAuthenticated";
 import { LoginButton } from "./components/login/LoginButton";
 import { ModeToggle } from "./context/ModeToggle";
 import { Separator } from "./components/ui/separator";
@@ -52,12 +52,7 @@ function App() {
                 <span className="text-sm font-semibold">Mi salario</span>
               </div>
             </header>
-            {
-              <p className="flex items-center justify-center h-full text-lg font-semibold text-muted-foreground">
-                Modo Mantenimiento
-              </p>
-            }
-            {/* <ContentAuthenticated /> */}
+            <ContentAuthenticated />
           </SidebarInset>
         </SidebarProvider>
       </TooltipProvider>

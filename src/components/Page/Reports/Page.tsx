@@ -1,5 +1,3 @@
-// src\components\Page\Reports\Page.tsx
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileText, History } from "lucide-react";
@@ -17,32 +15,46 @@ const MONTHS = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-const START_YEAR = 2020;
-const currentYear = new Date().getFullYear();
-const YEARS = Array.from({ length: currentYear - START_YEAR + 1 }, (_, i) => String(currentYear - i));
-
 const monthOptions = MONTHS.map((name, i) => ({
   value: String(i + 1).padStart(2, "0"),
   label: name,
-}));
-
-const yearOptions = YEARS.map((year) => ({
-  value: year,
-  label: year,
 }));
 
 export const ReportsPage = () => {
   const { user } = useAuth0();
 
   const today = new Date();
+  const currentYear = today.getFullYear();
   const defaultMonth = String(today.getMonth() + 1).padStart(2, "0");
-  const defaultYear = String(today.getFullYear());
+  const defaultYear = String(currentYear);
 
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
   const [selectedYear, setSelectedYear] = useState(defaultYear);
 
   const { data: allExpenses, isFetching: isFetchingExpenses } = useConceptosGastos({ user });
   const { data: allIncomes, isFetching: isFetchingAllIncomes } = useConceptosIngresos({ user });
+
+  const yearOptions = useMemo(() => {
+    const periods = new Set<string>();
+    allExpenses.forEach((e) => periods.add(e.periodo));
+    allIncomes.forEach((i) => periods.add(i.periodo));
+
+    if (periods.size === 0) {
+      return [{ value: String(currentYear), label: String(currentYear) }];
+    }
+
+    const years = new Set<number>();
+    periods.forEach((p) => {
+      const y = Number.parseInt(p.split("-")[0], 10);
+      if (!Number.isNaN(y)) years.add(y);
+    });
+
+    const minYear = years.size > 0 ? Math.min(...years) : currentYear;
+    return Array.from({ length: currentYear - minYear + 1 }, (_, i) => ({
+      value: String(currentYear - i),
+      label: String(currentYear - i),
+    }));
+  }, [allExpenses, allIncomes]);
 
   const filteredExpenses = useMemo(() => {
     const periodo = `${selectedYear}-${selectedMonth}`;
@@ -63,8 +75,8 @@ export const ReportsPage = () => {
     const expensesData = filteredExpenses.map((exp) => ({
       fuente: exp.id_fuente_gasto?.nombre ?? "Sin fuente",
       color: exp.id_fuente_gasto?.color ?? "",
-      montoEstimado: exp.columnaMonto,
-      montoReal: exp.monto_real,
+      monto: exp.monto ?? 0,
+      pagado: exp.pagado,
       aclaracion: exp.aclaracion,
     }));
 
@@ -90,8 +102,8 @@ export const ReportsPage = () => {
         .map((exp) => ({
           fuente: exp.id_fuente_gasto?.nombre ?? "Sin fuente",
           color: exp.id_fuente_gasto?.color ?? "",
-          montoEstimado: exp.columnaMonto,
-          montoReal: exp.monto_real,
+          monto: exp.monto ?? 0,
+          pagado: exp.pagado,
           aclaracion: exp.aclaracion,
         })),
     }));
@@ -101,18 +113,12 @@ export const ReportsPage = () => {
     () => reportData.incomesData.reduce((sum, inc) => sum + inc.valor, 0),
     [reportData.incomesData],
   );
-  const totalEstimated = useMemo(
-    () => reportData.expensesData.reduce((sum, exp) => sum + exp.montoEstimado, 0),
+  const totalGastos = useMemo(
+    () => reportData.expensesData.reduce((sum, exp) => sum + exp.monto, 0),
     [reportData.expensesData],
   );
-  const totalReal = useMemo(
-    () => reportData.expensesData.reduce((sum, exp) => sum + (exp.montoReal ?? 0), 0),
-    [reportData.expensesData],
-  );
-  const hasRealExpenses = useMemo(
-    () => reportData.expensesData.some((exp) => exp.montoReal != null),
-    [reportData.expensesData],
-  );
+
+  const saldo = totalIncomes - totalGastos;
 
   const isFetching = isFetchingExpenses || isFetchingAllIncomes;
 
@@ -247,96 +253,66 @@ export const ReportsPage = () => {
         ) : (
           <Card className="p-4">
             <CardContent className="px-0 space-y-3">
+
               <div>
                 <h3 className="text-sm font-semibold text-green-600 dark:text-green-400 mb-2">
                   INGRESOS
                 </h3>
-                <div className="space-y-1">
-                  {reportData.incomesData.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">Sin ingresos registrados</p>
-                  ) : (
-                    reportData.incomesData.map((inc, i) => (
+                {reportData.incomesData.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">Sin ingresos registrados</p>
+                ) : (
+                  <div className="space-y-1">
+                    {reportData.incomesData.map((inc, i) => (
                       <div key={i} className="flex justify-between text-sm">
                         <span>{inc.fuente}</span>
                         <span className="font-mono">{formatPrice(inc.valor)}</span>
                       </div>
-                    ))
-                  )}
-                </div>
-                <Separator className="my-2" />
-                <div className="flex justify-between text-sm font-semibold">
+                    ))}
+                  </div>
+                )}
+                <div className="flex justify-between my-2 text-sm font-semibold">
                   <span>Total ingresos</span>
                   <span className="font-mono">{formatPrice(totalIncomes)}</span>
                 </div>
               </div>
 
-              <Separator className="my-2" />
-
-              <div>
-                <h3 className="text-sm font-semibold text-amber-600 dark:text-amber-400 mb-2">
-                  GASTOS ESTIMADOS
-                </h3>
-                <div className="space-y-1">
-                  {reportData.expensesData.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">Sin gastos registrados</p>
-                  ) : (
-                    reportData.expensesData.map((exp, i) => (
+              {reportData.expensesData.length > 0 ? (
+                <div>
+                  <h3 className="text-sm font-semibold text-amber-600 dark:text-amber-400 mb-2">
+                    GASTOS
+                  </h3>
+                  <div className="space-y-1">
+                    {reportData.expensesData.map((exp, i) => (
                       <div key={i} className="flex justify-between text-sm">
-                        <span style={exp.color ? { color: exp.color } : undefined}>{exp.fuente}</span>
-                        <span className="font-mono">{formatPrice(exp.montoEstimado)}</span>
+                        <span style={exp.color ? { color: exp.color } : undefined}>
+                          {exp.fuente}
+                          {exp.aclaracion && (
+                            <span className="ml-1 text-xs text-muted-foreground">({exp.aclaracion})</span>
+                          )}
+                        </span>
+                        <span className="font-mono">{formatPrice(exp.monto)}</span>
                       </div>
-                    ))
-                  )}
-                </div>
-                <Separator className="my-2" />
-                <div className="flex justify-between text-sm font-semibold">
-                  <span>Total gastos estimados</span>
-                  <span className="font-mono">{formatPrice(totalEstimated)}</span>
-                </div>
-              </div>
-
-              {hasRealExpenses && (
-                <>
-                  <Separator className="my-2" />
-
-                  <div>
-                    <h3 className="text-sm font-semibold text-red-600 dark:text-red-400 mb-2">
-                      GASTOS REALES
-                    </h3>
-                    <div className="space-y-1">
-                      {reportData.expensesData
-                        .filter((exp) => exp.montoReal != null)
-                        .map((exp, i) => (
-                          <div key={i} className="flex justify-between text-sm">
-                            <span style={exp.color ? { color: exp.color } : undefined}>{exp.fuente}</span>
-                            <span className="font-mono">{formatPrice(exp.montoReal)}</span>
-                          </div>
-                        ))}
-                    </div>
-                    <Separator className="my-2" />
-                    <div className="flex justify-between text-sm font-semibold">
-                      <span>Total gastos reales</span>
-                      <span className="font-mono">{formatPrice(totalReal)}</span>
-                    </div>
+                    ))}
                   </div>
-                </>
+                  <div className="flex my-2 justify-between text-sm font-semibold">
+                    <span>Total gastos</span>
+                    <span className="font-mono">{formatPrice(totalGastos)}</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">Sin gastos registrados</p>
               )}
 
               <Separator className="my-2" />
 
-              <div className="pt-1">
-                <div className="flex justify-between text-sm font-bold">
-                  <span>Saldo (Ingresos - Gastos reales)</span>
-                  <span className={`font-mono ${totalIncomes - totalReal >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                    {formatPrice(totalIncomes - totalReal)}
+              <div className="pt-1 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Ingresos - Gastos</span>
+                  <span className={`font-mono ${saldo >= 0 ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+                    {formatPrice(saldo)}
                   </span>
                 </div>
-                {totalIncomes > 0 && (
-                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>Ahorro</span>
-                    <span>{((totalIncomes - totalReal) / totalIncomes * 100).toFixed(1)}%</span>
-                  </div>
-                )}
+
               </div>
             </CardContent>
           </Card>

@@ -5,7 +5,7 @@ import z from "zod";
 export const formSchema = z.object({
   fuente_gasto: z.string().trim().min(1, 'La fuente de gasto es requerida'),
   periodo: z.string().trim().min(1, 'El periodo es requerido'),
-  monto_estimado: z.string().trim().default(''),
+  monto: z.string().trim().default(''),
   modo_porcentaje: z.boolean().default(false),
   porcentaje: z.string().trim().default('1'),
 }).superRefine((data, ctx) => {
@@ -19,12 +19,12 @@ export const formSchema = z.object({
       });
     }
   } else {
-    const monto = Number.parseFloat(data.monto_estimado);
+    const monto = Number.parseFloat(data.monto);
     if (Number.isNaN(monto) || monto < 0) {
       ctx.addIssue({
         code: "custom",
-        message: 'El monto estimado debe ser un valor mayor o igual a 0',
-        path: ['monto_estimado'],
+        message: 'El monto debe ser un valor mayor o igual a 0',
+        path: ['monto'],
       });
     }
   }
@@ -32,9 +32,9 @@ export const formSchema = z.object({
 
 export type FormSchema = z.input<typeof formSchema>;
 
-export const formSchemaEditMontoReal = z.object({
-  monto_real: z.string().trim().min(1, 'El monto real es requerido'),
-  aclaracion: z.string().trim()
+export const formSchemaEditPagado = z.object({
+  monto: z.string().trim().default(''),
+  aclaracion: z.string().trim().default(''),
 })
 
-export type FormSchemaEditMontoReal = z.input<typeof formSchemaEditMontoReal>;
+export type FormSchemaEditPagado = z.input<typeof formSchemaEditPagado>;

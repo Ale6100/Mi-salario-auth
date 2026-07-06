@@ -11,11 +11,11 @@ import type { ConceptoGastosDB } from "@/types/conceptosGastos";
 type CreateColumnsProps = {
   readonly handleEdit: (fuente: ConceptoGastosDB) => void;
   readonly handleDelete: (fuente: ConceptoGastosDB) => void;
-  readonly handleEditMontoReal: (fuente: ConceptoGastosDB) => void;
+  readonly handleEditPagado: (fuente: ConceptoGastosDB) => void;
   readonly isFetching: boolean;
 };
 
-export const createColumns = ({ handleEdit, handleDelete, handleEditMontoReal, isFetching }: CreateColumnsProps): ColumnDef<ConceptoGastosDB>[] => [
+export const createColumns = ({ handleEdit, handleDelete, handleEditPagado, isFetching }: CreateColumnsProps): ColumnDef<ConceptoGastosDB>[] => [
   {
     accessorKey: 'id_fuente_gasto',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fuente de gasto" />,
@@ -29,41 +29,49 @@ export const createColumns = ({ handleEdit, handleDelete, handleEditMontoReal, i
     }
   },
   {
-    accessorKey: 'columnaMonto',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Monto estimado" />,
-    accessorFn: (row) => formatPrice(row.columnaMonto),
-  },
-  {
-    accessorKey: 'monto_real',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Monto real" />,
-    accessorFn: (row) => row.monto_real == null ? '' : formatPrice(row.monto_real),
+    accessorKey: 'monto',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Monto" />,
+    accessorFn: (row) => formatPrice(row.monto ?? 0),
     cell: ({ row }) => {
+      const monto = row.original.monto ?? 0;
       const aclaracion = row.original.aclaracion;
-      const montoReal = row.original.monto_real;
-      if (montoReal == null) {
-        return (
-          <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            Pendiente
-          </span>
-        );
-      }
-      return <span title={`${aclaracion ?? ''}`} className={cn(aclaracion ? 'cursor-help' : '')}>{formatPrice(montoReal)}</span>;
+      const pagado = row.original.pagado;
+      return (
+        <span
+          title={aclaracion ? aclaracion : undefined}
+          className={cn(
+            pagado ? 'font-medium' : 'text-muted-foreground',
+            aclaracion ? 'cursor-help' : '',
+          )}
+        >
+          {formatPrice(monto)}
+          {!pagado && <span className="ml-1.5 text-xs text-muted-foreground/60">(estimado)</span>}
+        </span>
+      );
     }
   },
   {
-    accessorKey: 'diferencia',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Diferencia" />,
+    accessorKey: 'pagado',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Estado" />,
     cell: ({ row }) => {
-      const montoReal = row.original.monto_real;
-      const montoEstimado = row.original.columnaMonto;
-      if (montoReal == null) {
-        return <span className="text-muted-foreground">—</span>;
+      const pagado = row.original.pagado;
+      const aclaracion = row.original.aclaracion;
+      if (pagado) {
+        return (
+          <span
+            title={aclaracion ? aclaracion : undefined}
+            className={cn(
+              'inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400',
+              aclaracion ? 'cursor-help' : '',
+            )}
+          >
+            Pagado
+          </span>
+        );
       }
-      if (montoEstimado == null) return <span>-</span>;
-      const diferencia = montoEstimado - montoReal;
       return (
-        <span className={cn(diferencia >= 0 ? 'text-primary' : 'text-destructive')}>
-          {formatPrice(diferencia)}
+        <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          Pendiente
         </span>
       );
     },
@@ -78,7 +86,8 @@ export const createColumns = ({ handleEdit, handleDelete, handleEditMontoReal, i
     header: "Acciones",
     enableGlobalFilter: false,
     cell: ({ row }) => {
-      const labelEditarMonto = row.original.monto_real == null ? 'Registrar gasto real': 'Editar gasto real';
+      const pagado = row.original.pagado;
+      const labelPago = pagado ? 'Editar pago' : 'Marcar como pagado';
 
       return (
         <DropdownMenu modal={false}>
@@ -107,12 +116,12 @@ export const createColumns = ({ handleEdit, handleDelete, handleEditMontoReal, i
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem
-                title='Registrar gasto real'
+                title={labelPago}
                 className='cursor-pointer'
-                onClick={() => handleEditMontoReal(row.original)}
+                onClick={() => handleEditPagado(row.original)}
                 disabled={isFetching}
               >
-                {labelEditarMonto}
+                {labelPago}
               </DropdownMenuItem>
               <DropdownMenuItem
                 title='Eliminar gasto'

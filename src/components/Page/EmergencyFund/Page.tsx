@@ -61,7 +61,7 @@ export const EmergencyFundPage = () => {
 
   const gastosTotalesDelMes = useMemo(() => {
     if (!gastosMesActual?.length) return 0;
-    return gastosMesActual.reduce((total, gasto) => total + gasto.columnaMonto, 0);
+    return gastosMesActual.reduce((total, gasto) => total + (gasto.monto ?? 0), 0);
   }, [gastosMesActual]);
 
   const [montoPesos, setMontoPesos] = useState(0);

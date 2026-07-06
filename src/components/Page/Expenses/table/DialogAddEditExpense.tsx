@@ -59,7 +59,7 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
     defaultValues: {
       fuente_gasto: isEdit ? isOpen.expense?.id_fuente_gasto?._id ?? "" : "",
       periodo: isEdit ? isOpen.expense?.periodo ?? "" : currentMonth,
-      monto_estimado: isEdit && isOpen.expense?.monto_estimado != null ? isOpen.expense.monto_estimado.toString() : "",
+      monto: isEdit && isOpen.expense?.monto != null && isOpen.expense.monto !== -1 ? isOpen.expense.monto.toString() : "",
       modo_porcentaje: isEdit ? isOpen.expense?.porcentaje_total != null : false,
       porcentaje: isEdit && isOpen.expense?.porcentaje_total != null ? isOpen.expense.porcentaje_total.toString() : "1",
     }
@@ -81,7 +81,7 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
       sub: user.sub,
       id_fuente_gasto: data.fuente_gasto,
       periodo: data.periodo,
-      monto_estimado: data.modo_porcentaje ? undefined : Number.parseFloat(data.monto_estimado || '0'),
+      monto: data.modo_porcentaje ? undefined : Number.parseFloat(data.monto || '0'),
       porcentaje_total: data.modo_porcentaje ? Number.parseFloat(data.porcentaje || '0') : undefined,
     }
 
@@ -116,7 +116,7 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
     const dataToSend: PUTConceptoGastos = {
       id_fuente_gasto: data.fuente_gasto,
       periodo: data.periodo,
-      monto_estimado: data.modo_porcentaje ? undefined : Number.parseFloat(data.monto_estimado || '0'),
+      monto: data.modo_porcentaje ? undefined : Number.parseFloat(data.monto || '0'),
       porcentaje_total: data.modo_porcentaje ? Number.parseFloat(data.porcentaje || '0') : undefined,
     }
 
@@ -224,11 +224,11 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
 
               {!modoPorcentaje && (
                 <Controller
-                  name="monto_estimado"
+                  name="monto"
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel className="required">Monto estimado</FieldLabel>
+                      <FieldLabel className="required">Monto</FieldLabel>
                       <Input
                         type="number"
                         step="0.01"

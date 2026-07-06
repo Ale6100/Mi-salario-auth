@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { DataTable } from "@/components/utils/DataTable";
 import AlertAction from "@/components/utils/AlertAction";
 import { DialogAddEditExpense } from "./DialogAddEditExpense";
-import { DialogEditMontoReal } from "./DialogEditMontoReal";
+import { DialogEditPagado } from "./DialogEditPagado";
 
 type TableProps = {
   readonly data: ConceptoGastosDB[];
@@ -38,7 +38,7 @@ export const Table = ({ data, isFetching }: TableProps) => {
 
   const [ isOpenAddEditDialog, setIsOpenAddEditDialog ] = useState<{ status: boolean, expense: ConceptoGastosDB | undefined }>({ status: false, expense: undefined });
   const [ isDeleteOpen, setIsDeleteOpen ] = useState({ status: false, id: "" });
-  const [ isOpenEditMontoRealDialog, setIsOpenEditMontoRealDialog ] = useState<{ status: boolean, expense: ConceptoGastosDB | undefined }>({ status: false, expense: undefined });
+  const [ isOpenEditPagadoDialog, setIsOpenEditPagadoDialog ] = useState<{ status: boolean, expense: ConceptoGastosDB | undefined }>({ status: false, expense: undefined });
 
   const handleEdit = (expense: ConceptoGastosDB) => {
     setIsOpenAddEditDialog({ status: true, expense });
@@ -48,8 +48,8 @@ export const Table = ({ data, isFetching }: TableProps) => {
     setIsDeleteOpen({ status: true, id: expense._id });
   }
 
-  const handleEditMontoReal = (expense: ConceptoGastosDB) => {
-    setIsOpenEditMontoRealDialog({ status: true, expense });
+  const handleEditPagado = (expense: ConceptoGastosDB) => {
+    setIsOpenEditPagadoDialog({ status: true, expense });
   }
 
   const configBtnAcceptDelete: BtnAlertActionConfig = {
@@ -74,7 +74,7 @@ export const Table = ({ data, isFetching }: TableProps) => {
     }
   }
 
-  const columns = useMemo(() => createColumns({ handleEdit, handleDelete, handleEditMontoReal, isFetching: isFetching || isFetchingFuentes }), [isFetching, isFetchingFuentes]);
+  const columns = useMemo(() => createColumns({ handleEdit, handleDelete, handleEditPagado, isFetching: isFetching || isFetchingFuentes }), [isFetching, isFetchingFuentes]);
 
   const ButtonAddExpense = <Button onClick={() => setIsOpenAddEditDialog({ status: true, expense: undefined })} className="cursor-pointer" disabled={isFetchingFuentes || isFetching}>Agregar</Button>
 
@@ -94,9 +94,9 @@ export const Table = ({ data, isFetching }: TableProps) => {
     }
 
     {
-      isOpenEditMontoRealDialog.status && <DialogEditMontoReal
-        isOpen={isOpenEditMontoRealDialog}
-        setIsOpen={setIsOpenEditMontoRealDialog}
+      isOpenEditPagadoDialog.status && <DialogEditPagado
+        isOpen={isOpenEditPagadoDialog}
+        setIsOpen={setIsOpenEditPagadoDialog}
       />
     }
 

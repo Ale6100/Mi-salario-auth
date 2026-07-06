@@ -1,5 +1,3 @@
-// src\components\Page\Reports\util.ts
-
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -7,13 +5,13 @@ const SEPARATOR = "=".repeat(60);
 const SUB_SEPARATOR = "-".repeat(60);
 const SUB_SEPARATOR_SMALL = "-".repeat(44);
 
-const formatPrice = (value: number | undefined | null): string => {
+const formatPrice = (value: number): string => {
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value ?? 0);
+  }).format(value);
 };
 
 type Income = {
@@ -24,8 +22,8 @@ type Income = {
 type Expense = {
   fuente: string;
   color: string;
-  montoEstimado: number;
-  montoReal: number | undefined | null;
+  monto: number;
+  pagado: boolean;
   aclaracion?: string;
 };
 
@@ -58,9 +56,7 @@ const monthYearFromPeriodo = (periodo: string): string => {
 
 const buildPeriodSection = (incomes: Income[], expenses: Expense[]): string[] => {
   const totalIncomes = incomes.reduce((sum, inc) => sum + inc.valor, 0);
-  const totalExpensesEstimated = expenses.reduce((sum, exp) => sum + exp.montoEstimado, 0);
-  const totalExpensesReal = expenses.reduce((sum, exp) => sum + (exp.montoReal ?? 0), 0);
-  const hasRealExpenses = expenses.some((exp) => exp.montoReal != null);
+  const totalGastos = expenses.reduce((sum, e) => sum + e.monto, 0);
 
   const lines: string[] = [
     "INGRESOS DEL MES",
@@ -73,14 +69,14 @@ const buildPeriodSection = (incomes: Income[], expenses: Expense[]): string[] =>
     SUB_SEPARATOR_SMALL,
     padValue("TOTAL INGRESOS", formatPrice(totalIncomes)),
     "",
-    "GASTOS ESTIMADOS DEL MES",
+    "GASTOS DEL MES",
     SUB_SEPARATOR,
-    ` ${"Fuente".padEnd(30)} ${"Monto Estimado".padStart(14)}`,
+    ` ${"Fuente".padEnd(30)} ${"Monto".padStart(14)}`,
     SUB_SEPARATOR_SMALL,
     ...(expenses.length === 0
       ? [` ${"Sin gastos registrados".padEnd(44)}`]
       : expenses.map((exp) => {
-        const line = ` ${exp.fuente.padEnd(30)} ${formatPrice(exp.montoEstimado).padStart(14)}`;
+        const line = ` ${exp.fuente.padEnd(30)} ${formatPrice(exp.monto).padStart(14)}`;
         if (exp.aclaracion) {
           return `${line}
  ${`→ ${exp.aclaracion}`.padEnd(46)}`;
@@ -88,44 +84,20 @@ const buildPeriodSection = (incomes: Income[], expenses: Expense[]): string[] =>
         return line;
       })),
     SUB_SEPARATOR_SMALL,
-    padValue("TOTAL GASTOS ESTIMADOS", formatPrice(totalExpensesEstimated)),
+    padValue("TOTAL GASTOS", formatPrice(totalGastos)),
     "",
   ];
 
-  if (hasRealExpenses) {
-    lines.push(
-      "GASTOS REALES DEL MES",
-      SUB_SEPARATOR,
-      ` ${"Fuente".padEnd(30)} ${"Monto Real".padStart(14)}`,
-      SUB_SEPARATOR_SMALL,
-    );
-    for (const exp of expenses) {
-      if (exp.montoReal == null) continue;
-      const line = ` ${exp.fuente.padEnd(30)} ${formatPrice(exp.montoReal).padStart(14)}`;
-      if (exp.aclaracion) {
-        lines.push(line, ` ${`→ ${exp.aclaracion}`.padEnd(46)}`);
-      } else {
-        lines.push(line);
-      }
-    }
-    lines.push(SUB_SEPARATOR_SMALL, padValue("TOTAL GASTOS REALES", formatPrice(totalExpensesReal)), "");
-  }
+  const saldoReal = totalIncomes - totalGastos;
 
   lines.push(
-    "INDICADORES",
+    "RESUMEN",
     SUB_SEPARATOR,
-    ` ${"Total ingresos:".padEnd(30)} ${formatPrice(totalIncomes).padStart(14)}`,
-    ` ${"Total gastos estimados:".padEnd(30)} ${formatPrice(totalExpensesEstimated).padStart(14)}`,
+    padValue("Ingresos", formatPrice(totalIncomes)),
+    padValue("Gastos totales", formatPrice(totalGastos)),
+    SUB_SEPARATOR_SMALL,
+    padValue("SALDO (Ingresos - Gastos)", formatPrice(saldoReal)),
   );
-
-  if (hasRealExpenses) {
-    const diff = totalIncomes - totalExpensesReal;
-    lines.push(
-      ` ${"Total gastos reales:".padEnd(30)} ${formatPrice(totalExpensesReal).padStart(14)}`,
-      SUB_SEPARATOR_SMALL,
-      ` ${"SALDO:".padEnd(30)} ${formatPrice(diff).padStart(14)}`,
-    );
-  }
 
   return lines;
 };
@@ -157,10 +129,8 @@ export const generateFullReport = ({ periods }: FullReportParams): string => {
   const firstPeriodo = periods.at(0)?.periodo;
   const lastPeriodo = periods.at(-1)?.periodo;
 
-  let globalTotalIncomes = 0;
-  let globalTotalEstimated = 0;
-  let globalTotalReal = 0;
-  let globalCountWithReal = 0;
+  let globalIncome = 0;
+  let globalGastos = 0;
 
   const allLines: string[] = [
     SEPARATOR,
@@ -177,15 +147,11 @@ export const generateFullReport = ({ periods }: FullReportParams): string => {
 
   for (const period of periods) {
     const label = monthYearFromPeriodo(period.periodo);
-    const periodIncomes = period.incomes.reduce((s, inc) => s + inc.valor, 0);
-    const periodEstimated = period.expenses.reduce((s, exp) => s + exp.montoEstimado, 0);
-    const periodReal = period.expenses.reduce((s, exp) => s + (exp.montoReal ?? 0), 0);
-    const hasReal = period.expenses.some((exp) => exp.montoReal != null);
+    const inc = period.incomes.reduce((s, i) => s + i.valor, 0);
+    const gastos = period.expenses.reduce((s, e) => s + e.monto, 0);
 
-    globalTotalIncomes += periodIncomes;
-    globalTotalEstimated += periodEstimated;
-    globalTotalReal += periodReal;
-    if (hasReal) globalCountWithReal++;
+    globalIncome += inc;
+    globalGastos += gastos;
 
     const sectionLines = buildPeriodSection(period.incomes, period.expenses);
 
@@ -199,9 +165,7 @@ export const generateFullReport = ({ periods }: FullReportParams): string => {
     );
   }
 
-  const globalAhorro = globalTotalIncomes > 0 ? ((globalTotalIncomes - globalTotalReal) / globalTotalIncomes) * 100 : 0;
-  const globalComparacion = globalTotalEstimated > 0 ? (globalTotalReal / globalTotalEstimated) * 100 : 0;
-  const hasAnyReal = globalCountWithReal > 0;
+  const saldoGlobal = globalIncome - globalGastos;
 
   allLines.push(
     SEPARATOR,
@@ -210,47 +174,20 @@ export const generateFullReport = ({ periods }: FullReportParams): string => {
     "",
     "ACUMULADO DE TODOS LOS PERIODOS",
     SUB_SEPARATOR,
-    padValue("Total ingresos", formatPrice(globalTotalIncomes)),
-    padValue("Total gastos estimados", formatPrice(globalTotalEstimated)),
+    padValue("Total ingresos", formatPrice(globalIncome)),
+    padValue("Total gastos", formatPrice(globalGastos)),
+    SUB_SEPARATOR_SMALL,
+    padValue("SALDO (Ingresos - Gastos)", formatPrice(saldoGlobal)),
   );
-
-  if (hasAnyReal) {
-    const diff = globalTotalIncomes - globalTotalReal;
-    allLines.push(
-      padValue("Total gastos reales", formatPrice(globalTotalReal)),
-      SUB_SEPARATOR_SMALL,
-      padValue("SALDO ACUMULADO (Ingresos - Gtos reales)", formatPrice(diff)),
-    );
-  }
 
   allLines.push(
     "",
     "INDICADORES GLOBALES",
     SUB_SEPARATOR,
-    ` ${"Porcentaje ahorrado total:".padEnd(30)} ${globalAhorro.toFixed(2).padStart(10)} %`,
+    ` ${"Períodos totales:".padEnd(30)} ${String(periods.length).padStart(10)}`,
+    ` ${"Promedio ingresos / mes:".padEnd(30)} ${formatPrice(periods.length > 0 ? globalIncome / periods.length : 0).padStart(14)}`,
+    ` ${"Promedio gastos / mes:".padEnd(30)} ${formatPrice(periods.length > 0 ? globalGastos / periods.length : 0).padStart(14)}`,
   );
-
-  if (hasAnyReal && globalTotalEstimated > 0) {
-    allLines.push(` ${"Gastos reales vs estimados:".padEnd(30)} ${globalComparacion.toFixed(2).padStart(10)} %`);
-  }
-
-  allLines.push(
-    ` ${"Total de períodos:".padEnd(30)} ${String(periods.length).padStart(10)}`,
-    ` ${"Promedio ingresos por mes:".padEnd(30)} ${formatPrice(periods.length > 0 ? globalTotalIncomes / periods.length : 0).padStart(14)}`,
-    ` ${"Promedio gastos estimados por mes:".padEnd(30)} ${formatPrice(periods.length > 0 ? globalTotalEstimated / periods.length : 0).padStart(14)}`,
-  );
-
-  if (hasAnyReal) {
-    allLines.push(` ${"Promedio gastos reales por mes:".padEnd(30)} ${formatPrice(periods.length > 0 ? globalTotalReal / periods.length : 0).padStart(14)}`);
-  }
-
-  if (globalTotalIncomes > 0) {
-    const pct = Math.min(Math.max(globalAhorro, 0), 100);
-    const filledCount = Math.round(pct / 5);
-    const emptyCount = 20 - filledCount;
-    const bar = "█".repeat(filledCount) + "░".repeat(emptyCount);
-    allLines.push("", ` Ahorro global: [${bar}] ${pct.toFixed(1)}%`);
-  }
 
   allLines.push("", SEPARATOR, ` Generado el: ${now}`, SEPARATOR);
 

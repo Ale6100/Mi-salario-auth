@@ -1,11 +1,11 @@
-// src\components\Page\Expenses\table\DialogEditMontoReal.tsx
+// src\components\Page\Expenses\table\DialogEditPagado.tsx
 
 import type { ConceptoGastosDB, PATCHConceptoGastos } from "@/types/conceptosGastos";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useId, type Dispatch, type SetStateAction } from "react";
+import { useId, useEffect, type Dispatch, type SetStateAction } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { formSchemaEditMontoReal, type FormSchemaEditMontoReal } from "./util";
+import { formSchemaEditPagado, type FormSchemaEditPagado } from "./util";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -14,34 +14,49 @@ import { MsgError } from "@/components/forms/MsgError";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { fetchPatchConceptoGastos } from "@/lib/fetch/conceptosGastos";
+import { formatPrice } from "@/lib/utils";
 
-type DialogEditMontoRealProps = {
+type DialogEditPagadoProps = {
   readonly isOpen: { status: boolean, expense: ConceptoGastosDB | undefined };
   readonly setIsOpen: Dispatch<SetStateAction<{ status: boolean, expense: ConceptoGastosDB | undefined }>>;
 }
 
-export const DialogEditMontoReal = ({ isOpen, setIsOpen }: DialogEditMontoRealProps) => {
+export const DialogEditPagado = ({ isOpen, setIsOpen }: DialogEditPagadoProps) => {
   const { getAccessTokenSilently } = useAuth0();
 
   const toastId = useId();
   const queryClient = useQueryClient();
 
-  const form = useForm<FormSchemaEditMontoReal>({
-    resolver: zodResolver(formSchemaEditMontoReal),
+  const form = useForm<FormSchemaEditPagado>({
+    resolver: zodResolver(formSchemaEditPagado),
     defaultValues: {
-      monto_real: isOpen.expense?.monto_real?.toString() ?? '',
-      aclaracion: isOpen.expense?.aclaracion ?? '',
+      monto: '',
+      aclaracion: '',
     }
   });
 
-  const onSubmit = async (data: FormSchemaEditMontoReal) => {
+  useEffect(() => {
+    if (isOpen.expense) {
+      form.reset({
+        monto: isOpen.expense.pagado && isOpen.expense.monto != null && isOpen.expense.monto !== -1
+          ? isOpen.expense.monto.toString()
+          : '',
+        aclaracion: isOpen.expense.aclaracion ?? '',
+      });
+    }
+  }, [isOpen.expense, form]);
+
+  const onSubmit = async (data: FormSchemaEditPagado) => {
     const token = await getAccessTokenSilently();
 
     if (!isOpen.expense?._id) return;
 
     const dataToSend: PATCHConceptoGastos = {
-      monto_real: Number.parseFloat(data.monto_real),
       aclaracion: data.aclaracion,
+    }
+
+    if (data.monto) {
+      dataToSend.monto = Number.parseFloat(data.monto);
     }
 
     toast.loading('Espere...', { id: toastId });
@@ -52,11 +67,11 @@ export const DialogEditMontoReal = ({ isOpen, setIsOpen }: DialogEditMontoRealPr
     })
 
     if (response.statusCode != 200) {
-      toast.error('Error al actualizar el gasto', { id: toastId });
+      toast.error('Error al marcar como pagado', { id: toastId });
       return close();
     }
 
-    toast.success('Gasto actualizado', { id: toastId });
+    toast.success('Gasto marcado como pagado', { id: toastId });
     queryClient.invalidateQueries({ queryKey: ['conceptos-gastos'] });
     close();
   }
@@ -65,7 +80,9 @@ export const DialogEditMontoReal = ({ isOpen, setIsOpen }: DialogEditMontoRealPr
     setIsOpen({ status: false, expense: undefined });
   }
 
-  const { isSubmitting, isDirty } = form.formState;
+  const { isSubmitting } = form.formState;
+
+  const yaPagado = isOpen.expense?.pagado;
 
   return (
     <Dialog open={isOpen.status} onOpenChange={open => {
@@ -74,30 +91,38 @@ export const DialogEditMontoReal = ({ isOpen, setIsOpen }: DialogEditMontoRealPr
     }}>
       <DialogContent className={'max-w-[95vw]! sm:max-w-[80vw]! max-h-[90dvh] overflow-x-hidden'}>
         <DialogHeader>
-          <DialogTitle className="sm:text-lg">{"Registrar monto real"}</DialogTitle>
+          <DialogTitle className="sm:text-lg">{yaPagado ? "Editar pago" : "Marcar como pagado"}</DialogTitle>
           <DialogDescription>
-            Escribe el monto real del gasto
+            {yaPagado
+              ? "Actualizá el monto final o la aclaración de este gasto ya pagado."
+              : `Confirmá el pago de este gasto. El monto actual es ${formatPrice(isOpen.expense?.monto ?? 0)}.`
+            }
           </DialogDescription>
         </DialogHeader>
         <section>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FieldGroup>
               <Controller
-                name="monto_real"
+                name="monto"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel className="required">Monto real</FieldLabel>
+                    <FieldLabel>Monto final {!yaPagado && <span className="text-xs text-muted-foreground">(opcional)</span>}</FieldLabel>
                     <Input
                       type="number"
                       step="0.01"
                       min="0"
-                      placeholder="0.00"
+                      placeholder={yaPagado ? "0.00" : "Dejalo vacío si no cambia"}
                       {...field}
                       aria-invalid={fieldState.invalid}
                       onChange={field.onChange}
                     />
                     <MsgError fieldState={fieldState} />
+                    {!yaPagado && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Si el monto final es el mismo que el estimado, podés dejarlo vacío.
+                      </p>
+                    )}
                   </Field>
                 )}
               />
@@ -110,7 +135,7 @@ export const DialogEditMontoReal = ({ isOpen, setIsOpen }: DialogEditMontoRealPr
                     <FieldLabel>Aclaración</FieldLabel>
                     <Input
                       type="text"
-                      placeholder="Aclaración opcional adicional"
+                      placeholder="Aclaración opcional"
                       {...field}
                       aria-invalid={fieldState.invalid}
                       onChange={field.onChange}
@@ -124,8 +149,8 @@ export const DialogEditMontoReal = ({ isOpen, setIsOpen }: DialogEditMontoRealPr
                 <Button type="button" title="Cancelar" className="cursor-pointer" variant="destructive" onClick={close}>
                   Cancelar
                 </Button>
-                <Button type="submit" title="Guardar" className="cursor-pointer" disabled={isSubmitting || !isDirty}>
-                  Guardar
+                <Button type="submit" title={yaPagado ? "Guardar cambios" : "Confirmar pago"} className="cursor-pointer" disabled={isSubmitting}>
+                  {yaPagado ? "Guardar cambios" : "Confirmar pago"}
                 </Button>
               </div>
             </FieldGroup>

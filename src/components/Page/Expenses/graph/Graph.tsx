@@ -108,12 +108,12 @@ export const Graph = ({ data, ingresosTotalesDelMes }: GraphProps) => {
 
       const existing = sourceMap.get(fuente._id);
       if (existing) {
-        existing.total += item.columnaMonto;
+        existing.total += item.monto ?? 0;
       } else {
         sourceMap.set(fuente._id, {
           nombre: fuente.nombre,
           color: fuente.color,
-          total: item.columnaMonto,
+          total: item.monto ?? 0,
         });
       }
     }
