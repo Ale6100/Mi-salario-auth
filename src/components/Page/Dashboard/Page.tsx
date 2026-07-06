@@ -1,9 +1,11 @@
 // src\components\Page\Dashboard\Page.tsx
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { es } from "date-fns/locale";
 import { formatPrice } from "@/lib/utils";
 import { getDate, getDaysInMonth, format } from "date-fns";
+import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
 import { RUTAS } from "@/lib/const";
 import { Separator } from "@/components/ui/separator";
@@ -11,8 +13,9 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useConceptosGastos } from "@/hooks/useConceptosGastos";
 import { useConceptosIngresos } from "@/hooks/useConceptosIngresos";
 import { useFondoEmergencia } from "@/hooks/useFondoEmergencia";
-import { useMemo } from "react";
-import { Wallet, CreditCard, Shield, PiggyBank, TrendingUp, TrendingDown, ArrowRight, AlertTriangle, CalendarDays } from "lucide-react";
+import { usePatchSaldoReal } from "@/hooks/usePatchSaldoReal";
+import { useEffect, useMemo, useState } from "react";
+import { Wallet, CreditCard, Shield, PiggyBank, TrendingUp, TrendingDown, ArrowRight, AlertTriangle, CalendarDays, X } from "lucide-react";
 
 export const DashboardPage = () => {
   const { user } = useAuth0();
@@ -22,8 +25,8 @@ export const DashboardPage = () => {
 
   const dayOfMonth = getDate(now);
   const daysInMonth = getDaysInMonth(now);
-  const remainingDays = daysInMonth - dayOfMonth;
-  const mesTranscurrido = daysInMonth > 0 ? dayOfMonth / daysInMonth : 0;
+  const remainingDays = daysInMonth - dayOfMonth + 1;
+  const mesTranscurrido = daysInMonth > 0 ? (dayOfMonth - 1) / daysInMonth : 0;
 
   const { data: ingresos, isFetching: isFetchingIngresos } = useConceptosIngresos({
     user,
@@ -45,12 +48,26 @@ export const DashboardPage = () => {
     return gastos.reduce((sum, gas) => sum + (gas.monto ?? 0), 0);
   }, [gastos]);
 
+  const [saldoReal, setSaldoReal] = useState<number | null>(null);
+  const [saldoRealInput, setSaldoRealInput] = useState("");
+
+  const patchSaldoReal = usePatchSaldoReal({ user });
+
+  useEffect(() => {
+    if (fondo) {
+      setSaldoReal(fondo.saldo_real ?? null);
+    }
+  }, [fondo]);
+
   const excedente = Math.max(0, ingresosTotales - gastosTotales);
   const aporteFondo = fondo ? excedente * (fondo.porcentaje_total / 100) : 0;
   const balance = ingresosTotales - gastosTotales - aporteFondo;
   const balanceSinFondo = ingresosTotales - gastosTotales;
 
-  const gastoDiarioRecomendado = daysInMonth > 0 ? balance / daysInMonth : 0;
+  const gastoDiarioRecomendado = daysInMonth > 0
+    ? (saldoReal !== null ? saldoReal / Math.max(remainingDays, 1) : balance / daysInMonth)
+    : 0;
+  const usandoSaldoReal = saldoReal !== null;
   const deberiasTenerHoy = daysInMonth > 0 ? balance * remainingDays / daysInMonth : 0;
 
   const monthName = useMemo(
@@ -58,6 +75,25 @@ export const DashboardPage = () => {
     [now],
   );
   const year = now.getFullYear();
+
+  const handleSaveSaldoReal = () => {
+    const normalized = saldoRealInput
+      .replace(/[^0-9.,]/g, "")
+      .replaceAll(".", "")
+      .replaceAll(",", ".");
+    const value = Number(normalized);
+    if (!Number.isNaN(value) && value >= 0) {
+      setSaldoReal(value);
+      patchSaldoReal.mutate(value);
+      setSaldoRealInput("");
+    }
+  };
+
+  const handleClearSaldoReal = () => {
+    setSaldoReal(null);
+    patchSaldoReal.mutate(null);
+    setSaldoRealInput("");
+  };
 
   const isFetching = isFetchingIngresos || isFetchingGastos || isFetchingFondo;
 
@@ -73,7 +109,7 @@ export const DashboardPage = () => {
   }
 
   return (
-    <section className="p-4 space-y-4">
+    <section className="p-4 space-y-4 max-w-7xl mx-auto">
       <h1 className="text-3xl max-sm:text-lg font-bold text-center">Dashboard</h1>
       <p className="text-muted-foreground text-center text-sm max-w-md mx-auto">
         Resumen financiero de {monthName} {year}
@@ -81,7 +117,6 @@ export const DashboardPage = () => {
 
       <Separator className="my-6" />
 
-      {/* Resumen del mes */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight">Resumen del mes</h2>
 
@@ -228,7 +263,6 @@ export const DashboardPage = () => {
 
       <Separator className="my-6" />
 
-      {/* Proyección diaria */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight">Proyección diaria</h2>
 
@@ -243,15 +277,58 @@ export const DashboardPage = () => {
                   {formatPrice(deberiasTenerHoy)}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  para cubrir el resto del mes
+                  para cubrir el día actual más resto del mes
                 </p>
+              </div>
+
+              <Separator />
+
+              <div className="text-center space-y-3">
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
+                    Tu saldo real
+                  </p>
+                  {saldoReal !== null ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-xl font-bold">
+                        {formatPrice(saldoReal)}
+                      </span>
+                      <button
+                        onClick={handleClearSaldoReal}
+                        className="text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                        title="Usar saldo estimado"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Ej: 50000"
+                        value={saldoRealInput}
+                        onChange={(e) => setSaldoRealInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSaveSaldoReal()}
+                        className="max-w-[140px] h-8 text-center text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={handleSaveSaldoReal}
+                        disabled={!saldoRealInput.trim()}
+                        className="h-8"
+                      >
+                        Guardar
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <Separator />
 
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
-                  Gasto diario recomendado:{" "}
+                  Gasto diario recomendado{usandoSaldoReal ? " usando saldo real" : ""}:{" "}
                   <span className="font-semibold text-foreground">
                     {formatPrice(gastoDiarioRecomendado)}
                   </span>{" "}

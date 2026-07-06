@@ -1,9 +1,9 @@
 // src\components\Page\Income\Page.tsx
 
-import { Graph } from "./graph/Graph";
-import { Table } from "./table/Table";
 import { Card, CardContent } from "@/components/ui/card";
+import { Graph } from "./graph/Graph";
 import { Separator } from "@/components/ui/separator";
+import { Table } from "./table/Table";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useConceptosIngresos } from "@/hooks/useConceptosIngresos";
 
@@ -40,7 +40,7 @@ export const IncomePage = () => {
   };
 
   return (
-    <section className="p-4 space-y-4">
+    <section className="p-4 space-y-4 w-full max-w-7xl mx-auto">
       <h1 className="text-3xl max-sm:text-lg font-bold text-center">Ingresos mensuales</h1>
 
       <p className="text-muted-foreground text-center text-sm max-w-md mx-auto">

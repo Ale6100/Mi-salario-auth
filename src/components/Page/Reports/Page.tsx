@@ -1,3 +1,5 @@
+// src\components\Page\Reports\Page.tsx
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileText, History } from "lucide-react";
@@ -87,7 +89,7 @@ export const ReportsPage = () => {
     const expensePeriods = new Set(allExpenses.map((e) => e.periodo));
     const incomePeriods = new Set(allIncomes.map((i) => i.periodo));
     const allPeriodsSet = new Set([...expensePeriods, ...incomePeriods]);
-    const sortedPeriods = Array.from(allPeriodsSet).sort();
+    const sortedPeriods = Array.from(allPeriodsSet).sort((a, b) => a.localeCompare(b));
 
     return sortedPeriods.map((periodo) => ({
       periodo,
@@ -157,7 +159,7 @@ export const ReportsPage = () => {
   const currentYearOption = yearOptions.find((o) => o.value === selectedYear) ?? null;
 
   return (
-    <section className="p-4 space-y-4">
+    <section className="p-4 space-y-4 w-full max-w-7xl mx-auto">
       <h1 className="text-3xl max-sm:text-lg font-bold text-center">Reportes mensuales</h1>
 
       <p className="text-muted-foreground text-center text-sm max-w-md mx-auto">
@@ -166,7 +168,7 @@ export const ReportsPage = () => {
 
       <Separator className="my-6" />
 
-      <Card className="max-w-2xl mx-auto">
+      <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <FileText className="size-5" />
@@ -214,7 +216,7 @@ export const ReportsPage = () => {
       </Card>
 
       {fullReportPeriods.length > 1 && (
-        <Card className="max-w-2xl mx-auto">
+        <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <History className="size-5" />
@@ -241,7 +243,7 @@ export const ReportsPage = () => {
 
       <Separator className="my-4" />
 
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight text-center">
           Vista previa - {monthLabel}
         </h2>

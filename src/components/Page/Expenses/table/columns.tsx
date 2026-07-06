@@ -31,7 +31,12 @@ export const createColumns = ({ handleEdit, handleDelete, handleEditPagado, isFe
   {
     accessorKey: 'monto',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Monto" />,
-    accessorFn: (row) => formatPrice(row.monto ?? 0),
+    accessorFn: (row) => formatPrice(row.monto),
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.monto ?? 0;
+      const b = rowB.original.monto ?? 0;
+      return a < b ? -1 : a > b ? 1 : 0;
+    },
     cell: ({ row }) => {
       const monto = row.original.monto ?? 0;
       const aclaracion = row.original.aclaracion;

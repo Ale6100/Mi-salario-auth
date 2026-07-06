@@ -33,7 +33,7 @@ export const ExpensesPage = () => {
   };
 
   return (
-    <section className="p-4 space-y-4">
+    <section className="p-4 space-y-4 w-full max-w-7xl mx-auto">
       <h1 className="text-3xl max-sm:text-lg font-bold text-center">Gastos mensuales</h1>
 
       <p className="text-muted-foreground text-center text-sm max-w-md mx-auto">

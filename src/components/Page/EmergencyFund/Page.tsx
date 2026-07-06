@@ -300,7 +300,7 @@ export const EmergencyFundPage = () => {
   };
 
   return (
-    <section className="p-4 space-y-6 max-w-5xl w-full mx-auto">
+    <section className="p-4 space-y-6 w-full max-w-7xl mx-auto">
       <div className="text-center space-y-1">
         <h1 className="text-3xl max-sm:text-2xl font-bold">Fondo de emergencia</h1>
         <p className="text-muted-foreground text-sm max-w-md mx-auto">

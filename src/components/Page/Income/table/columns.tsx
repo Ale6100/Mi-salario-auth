@@ -31,6 +31,12 @@ export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateCo
     accessorKey: 'valor',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Valor" />,
     accessorFn: (row) => formatPrice(row.valor),
+    cell: ({ row }) => formatPrice(row.original.valor),
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.valor ?? 0;
+      const b = rowB.original.valor ?? 0;
+      return a < b ? -1 : a > b ? 1 : 0;
+    },
   },
   {
     accessorKey: 'periodo',
