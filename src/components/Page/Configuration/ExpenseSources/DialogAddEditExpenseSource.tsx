@@ -7,7 +7,9 @@ import { fetchPostFuenteGastos, fetchPutFuenteGastos } from "@/lib/fetch/fuentes
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { formSchema, type FormSchema } from "./util";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { MsgError } from "@/components/forms/MsgError";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useId, type Dispatch, type SetStateAction } from "react";
@@ -34,6 +36,7 @@ export const DialogAddEditExpenseSource = ({ isOpen, setIsOpen, actualSources }:
     defaultValues: {
       nombre: isEdit ? (isOpen.source?.nombre ?? "") : "",
       color: isEdit ? (isOpen.source?.color ?? "") : "",
+      es_indispensable: isEdit ? (isOpen.source?.es_indispensable ?? false) : false,
     }
   });
 
@@ -50,6 +53,7 @@ export const DialogAddEditExpenseSource = ({ isOpen, setIsOpen, actualSources }:
       sub: user.sub,
       nombre: data.nombre,
       color: data.color,
+      es_indispensable: data.es_indispensable,
     }
 
     toast.loading('Espere...', { id: toastId });
@@ -77,6 +81,7 @@ export const DialogAddEditExpenseSource = ({ isOpen, setIsOpen, actualSources }:
     const dataToSend: PUTFuenteGastos = {
       nombre: data.nombre,
       color: data.color,
+      es_indispensable: data.es_indispensable,
     }
 
     toast.loading('Espere...', { id: toastId });
@@ -188,6 +193,28 @@ export const DialogAddEditExpenseSource = ({ isOpen, setIsOpen, actualSources }:
                     </Field>
                   );
                 }}
+              />
+
+              <Controller
+                name="es_indispensable"
+                control={form.control}
+                render={({ field }) => (
+                  <div className="flex items-center justify-between gap-2 rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="es-indispensable" className="text-sm font-medium cursor-pointer">
+                        Gasto indispensable
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Se considera para el cálculo del fondo de emergencia
+                      </p>
+                    </div>
+                    <Switch
+                      id="es-indispensable"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </div>
+                )}
               />
 
               <div className="flex justify-between">

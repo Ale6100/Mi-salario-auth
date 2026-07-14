@@ -17,7 +17,18 @@ export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateCo
   {
     accessorKey: 'nombre',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nombre" />,
-    accessorFn: (row) => row.nombre || '-',
+    cell: ({ row }) => {
+      const nombre = row.original.nombre || '-';
+      const esIndispensable = row.original.es_indispensable;
+      return (
+        <span className="inline-flex items-center gap-1.5">
+          {esIndispensable && (
+            <span className="size-2 rounded-full bg-destructive shrink-0" title="Indispensable" />
+          )}
+          {nombre}
+        </span>
+      );
+    },
   },
   {
     accessorKey: 'color',

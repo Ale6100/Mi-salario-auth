@@ -8,6 +8,7 @@ export type FondoEmergenciaDB = {
   incluir_dolares: boolean;
   porcentaje_total: number;
   saldo_real: number | null;
+  gastos_adicionales?: number;
 };
 
 export type PATCHFondoEmergencia = Partial<Omit<FondoEmergenciaDB, "_id">>;

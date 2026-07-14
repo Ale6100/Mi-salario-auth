@@ -5,6 +5,7 @@ export type FuenteGastosDB = {
   sub: string;
   nombre: string;
   color: string;
+  es_indispensable?: boolean;
   updatedAt: string;
 };
 

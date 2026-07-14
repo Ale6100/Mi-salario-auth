@@ -59,14 +59,25 @@ export const EmergencyFundPage = () => {
     return ingresosMesActual.reduce((total, ingreso) => total + ingreso.valor, 0);
   }, [ingresosMesActual]);
 
-  const gastosTotalesDelMes = useMemo(() => {
+  const gastosIndispensablesDelMes = useMemo(() => {
+    if (!gastosMesActual?.length) return [];
+    return gastosMesActual.filter(gasto => gasto.id_fuente_gasto?.es_indispensable === true);
+  }, [gastosMesActual]);
+
+  const totalGastosDelMes = useMemo(() => {
     if (!gastosMesActual?.length) return 0;
     return gastosMesActual.reduce((total, gasto) => total + (gasto.monto ?? 0), 0);
   }, [gastosMesActual]);
 
+  const totalGastosIndispensables = useMemo(() => {
+    if (!gastosIndispensablesDelMes.length) return 0;
+    return gastosIndispensablesDelMes.reduce((total, gasto) => total + (gasto.monto ?? 0), 0);
+  }, [gastosIndispensablesDelMes]);
+
   const [montoPesos, setMontoPesos] = useState(0);
   const [montoDolares, setMontoDolares] = useState(0);
   const [porcentajeTotal, setPorcentajeTotal] = useState(66.66);
+  const [gastosAdicionales, setGastosAdicionales] = useState(0);
   const initializedRef = useRef(false);
   const [isDirty, setIsDirty] = useState(false);
 
@@ -77,6 +88,7 @@ export const EmergencyFundPage = () => {
       setMontoPesos(data.monto_pesos ?? 0);
       setMontoDolares(data.monto_dolares ?? 0);
       setPorcentajeTotal(data.porcentaje_total ?? 66.66);
+      setGastosAdicionales(data.gastos_adicionales ?? 0);
     }
     setIsDirty(false);
   }, [data, isFetching]);
@@ -110,9 +122,10 @@ export const EmergencyFundPage = () => {
         monto_dolares: Number(montoDolares),
         incluir_dolares: false, // Por ahora no se usa
         porcentaje_total: Number(porcentajeTotal),
+        gastos_adicionales: Number(gastosAdicionales),
       });
     }, 800);
-  }, [montoPesos, montoDolares, porcentajeTotal, patchMutation]);
+  }, [montoPesos, montoDolares, porcentajeTotal, gastosAdicionales, patchMutation]);
 
   useEffect(() => {
     save();
@@ -120,20 +133,21 @@ export const EmergencyFundPage = () => {
       if (debounceRef.current) globalThis.clearTimeout(debounceRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [montoPesos, montoDolares, porcentajeTotal]);
+  }, [montoPesos, montoDolares, porcentajeTotal, gastosAdicionales]);
 
-  const excedenteMensual = Math.max(0, ingresosTotalesDelMes - gastosTotalesDelMes);
+  const gastosProteccionMensual = totalGastosIndispensables + gastosAdicionales;
+  const excedenteMensual = Math.max(0, ingresosTotalesDelMes - totalGastosDelMes);
   const aporteMensualEstimado = excedenteMensual * (porcentajeTotal / 100);
   const puedeAportar = excedenteMensual > 0;
 
   const milestoneData = useMemo(() => {
-    if (gastosTotalesDelMes <= 0) {
+    if (gastosProteccionMensual <= 0) {
       return { current: null, previous: null, next: null, isAllCompleted: false, hasExpenses: false };
     }
 
     const targets = MILESTONES.map((m) => ({
       ...m,
-      target: gastosTotalesDelMes * m.meses,
+      target: gastosProteccionMensual * m.meses,
     }));
 
     const currentIndex = targets.findIndex((m) => montoPesos < m.target);
@@ -155,7 +169,7 @@ export const EmergencyFundPage = () => {
       isAllCompleted: false,
       hasExpenses: true,
     };
-  }, [gastosTotalesDelMes, montoPesos]);
+  }, [gastosProteccionMensual, montoPesos]);
 
   const progress = milestoneData.current
     ? Math.min(100, (montoPesos / milestoneData.current.target) * 100)
@@ -179,6 +193,12 @@ export const EmergencyFundPage = () => {
     setIsDirty(true);
   };
 
+  const handleGastosAdicionalesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value === "" ? 0 : Number.parseFloat(e.target.value);
+    setGastosAdicionales(Number.isNaN(value) ? 0 : value);
+    setIsDirty(true);
+  };
+
   const isDataLoading = isFetching || isFetchingIngresosMesActual || isFetchingGastosMesActual;
 
   const renderMilestoneSection = () => {
@@ -190,7 +210,7 @@ export const EmergencyFundPage = () => {
             <div>
               <p className="font-medium text-muted-foreground">No hay datos de gastos</p>
               <p className="text-sm text-muted-foreground/70 mt-1">
-                Registrá tus gastos del mes para poder calcular los hitos del fondo de emergencia.
+                Registrá tus gastos del mes y marcá las fuentes como indispensables, o definí gastos adicionales abajo, para poder calcular los hitos del fondo de emergencia.
               </p>
             </div>
           </CardContent>
@@ -231,7 +251,7 @@ export const EmergencyFundPage = () => {
                 {milestoneData.previous.label} cubierto
               </p>
               <p className="text-xs text-muted-foreground truncate">
-                {formatPrice(gastosTotalesDelMes * milestoneData.previous.meses)}
+                {formatPrice(gastosProteccionMensual * milestoneData.previous.meses)}
               </p>
             </div>
           </div>
@@ -290,7 +310,7 @@ export const EmergencyFundPage = () => {
                 Siguiente meta: <span className="font-medium text-foreground">{milestoneData.next.label}</span>
               </p>
               <p className="text-xs text-muted-foreground truncate">
-                {formatPrice(gastosTotalesDelMes * milestoneData.next.meses)}
+                {formatPrice(gastosProteccionMensual * milestoneData.next.meses)}
               </p>
             </div>
           </div>
@@ -334,7 +354,10 @@ export const EmergencyFundPage = () => {
           <h2 className="text-lg font-semibold">Progreso por hitos</h2>
         </div>
         <p className="text-xs text-muted-foreground/70 -mt-1">
-          Cada mes de protección se calcula en base al total de gastos que registraste este mes.
+          Cada mes de protección se calcula en base a tus gastos indispensables del mes{" "}
+          más los <strong>gastos adicionales</strong> que definas abajo.{" "}
+          Podés marcar una fuente de gasto como indispensable desde{" "}
+          <strong>Configuración &gt; Fuentes de gastos</strong>.
         </p>
         {isDataLoading ? (
           <Card>
@@ -419,6 +442,29 @@ export const EmergencyFundPage = () => {
               </div>
             </div>
 
+            <div className="space-y-1.5">
+              <Label htmlFor="gastos-adicionales" className="flex items-center gap-1.5">
+                <TrendingUp className="size-4 text-muted-foreground" />
+                Gastos adicionales
+              </Label>
+              <div>
+                <Input
+                  id="gastos-adicionales"
+                  type="number"
+                  min={0}
+                  step={100}
+                  value={gastosAdicionales || ""}
+                  onChange={handleGastosAdicionalesChange}
+                  placeholder="0"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Gastos que no registraste como fuente pero tendrías en una emergencia (ej: alquiler que paga un familiar). Se suman a los indispensables para definir tu protección mensual.
+              </p>
+            </div>
+
+            <Separator />
+
             <div className="rounded-lg bg-muted/50 p-3 space-y-2">
               <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                 <TrendingUp className="size-3.5" />
@@ -430,12 +476,12 @@ export const EmergencyFundPage = () => {
                   <span className="font-medium">{formatPrice(ingresosTotalesDelMes)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Gastos estimados</span>
-                  <span className="font-medium">{formatPrice(gastosTotalesDelMes)}</span>
+                  <span className="text-muted-foreground">Gastos del mes</span>
+                  <span className="font-medium">−{formatPrice(totalGastosDelMes)}</span>
                 </div>
                 <Separator className="my-1" />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Excedente (ingresos − gastos)</span>
+                  <span className="text-muted-foreground">Excedente mensual</span>
                   <span className="font-medium">{formatPrice(excedenteMensual)}</span>
                 </div>
                 {puedeAportar ? (
