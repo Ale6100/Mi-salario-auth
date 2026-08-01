@@ -1,6 +1,6 @@
 # Mi salario
 
-Sitio y README en construcción. [Acá](https://mi-salario-auth.netlify.app) podrás ver su progreso.
+README en construcción. [Acá](https://mi-salario-auth.netlify.app) podrás ver su progreso.
 
 ```bash
 VITE_AUTH_DOMAIN = X # domain de auth0

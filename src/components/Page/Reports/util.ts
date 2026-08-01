@@ -88,17 +88,6 @@ const buildPeriodSection = (incomes: Income[], expenses: Expense[]): string[] =>
     "",
   ];
 
-  const saldoReal = totalIncomes - totalGastos;
-
-  lines.push(
-    "RESUMEN",
-    SUB_SEPARATOR,
-    padValue("Ingresos", formatPrice(totalIncomes)),
-    padValue("Gastos totales", formatPrice(totalGastos)),
-    SUB_SEPARATOR_SMALL,
-    padValue("SALDO (Ingresos - Gastos)", formatPrice(saldoReal)),
-  );
-
   return lines;
 };
 
@@ -165,8 +154,6 @@ export const generateFullReport = ({ periods }: FullReportParams): string => {
     );
   }
 
-  const saldoGlobal = globalIncome - globalGastos;
-
   allLines.push(
     SEPARATOR,
     `           RESUMEN GLOBAL`,
@@ -176,8 +163,6 @@ export const generateFullReport = ({ periods }: FullReportParams): string => {
     SUB_SEPARATOR,
     padValue("Total ingresos", formatPrice(globalIncome)),
     padValue("Total gastos", formatPrice(globalGastos)),
-    SUB_SEPARATOR_SMALL,
-    padValue("SALDO (Ingresos - Gastos)", formatPrice(saldoGlobal)),
   );
 
   allLines.push(

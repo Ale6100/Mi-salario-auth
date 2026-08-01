@@ -120,8 +120,6 @@ export const ReportsPage = () => {
     [reportData.expensesData],
   );
 
-  const saldo = totalIncomes - totalGastos;
-
   const isFetching = isFetchingExpenses || isFetchingAllIncomes;
 
   const handleDownload = () => {
@@ -305,17 +303,6 @@ export const ReportsPage = () => {
                 <p className="text-xs text-muted-foreground italic">Sin gastos registrados</p>
               )}
 
-              <Separator className="my-2" />
-
-              <div className="pt-1 space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Ingresos - Gastos</span>
-                  <span className={`font-mono ${saldo >= 0 ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
-                    {formatPrice(saldo)}
-                  </span>
-                </div>
-
-              </div>
             </CardContent>
           </Card>
         )}
