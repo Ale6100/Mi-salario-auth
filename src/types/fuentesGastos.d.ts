@@ -9,6 +9,6 @@ export type FuenteGastosDB = {
   updatedAt: string;
 };
 
-export type POSTFuenteGastos = Omit<FuenteGastosDB, "_id" | "updatedAt">;
+export type POSTFuenteGastos = Omit<FuenteGastosDB, "_id" | "sub" | "updatedAt">;
 
-export type PUTFuenteGastos = Omit<POSTFuenteGastos, "sub">;
+export type PUTFuenteGastos = POSTFuenteGastos;

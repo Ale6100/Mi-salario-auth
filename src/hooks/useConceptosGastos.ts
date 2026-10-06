@@ -27,7 +27,7 @@ export const useConceptosGastos = ({ user, periodo }: UseConceptosGastosParams =
       const token = await getAccessTokenSilently();
       if (!token) return EMPTY_CONCEPTOS_GASTOS;
 
-      const response = await fetchConceptosGastos({ sub: user.sub, periodo, token, signal });
+      const response = await fetchConceptosGastos({ periodo, token, signal });
       return response.data || EMPTY_CONCEPTOS_GASTOS;
     },
     initialData: EMPTY_CONCEPTOS_GASTOS,

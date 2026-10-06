@@ -2,10 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card"
+import { CopyPreviousMonthButton } from "@/components/table/CopyPreviousMonthButton";
 import { createColumns } from "./columns";
 import { DataTable } from "@/components/utils/DataTable"
 import { DialogAddEditIncome } from "./DialogAddEditIncome";
-import { fetchDeleteConceptoIngresos } from "@/lib/fetch/conceptosIngresos";
+import { fetchCopiarConceptosIngresosDelMesAnterior, fetchDeleteConceptoIngresos } from "@/lib/fetch/conceptosIngresos";
 import { toast } from "sonner";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useFuentesIngresos } from "@/hooks/useFuentesIngresos";
@@ -72,10 +73,12 @@ export const Table = ({ data, isFetching }: TableProps) => {
 
   const ButtonAddIncome = <Button onClick={() => setIsOpenAddEditDialog({ status: true, income: undefined })} className="cursor-pointer" disabled={isFetchingFuentes || isFetching}>Agregar</Button>
 
+  const ButtonCopyPreviousMonth = <CopyPreviousMonthButton concepto="ingresos" queryKey="conceptos-ingreso" copiar={fetchCopiarConceptosIngresosDelMesAnterior} disabled={isFetching} />
+
   return (
     <>
     <Card className='p-4 bg-card rounded-xl shadow-md'>
-      <DataTable columns={columns} data={data} dataLoading={isFetching} toolbarActions={[ButtonAddIncome]} sorting={sorting} />
+      <DataTable columns={columns} data={data} dataLoading={isFetching} toolbarActions={[ButtonCopyPreviousMonth, ButtonAddIncome]} sorting={sorting} />
     </Card>
 
     {

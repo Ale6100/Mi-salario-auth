@@ -51,7 +51,7 @@ export const DashboardPage = () => {
   const [saldoReal, setSaldoReal] = useState<number | null>(null);
   const [saldoRealInput, setSaldoRealInput] = useState("");
 
-  const patchSaldoReal = usePatchSaldoReal({ user });
+  const patchSaldoReal = usePatchSaldoReal();
 
   useEffect(() => {
     if (fondo) {

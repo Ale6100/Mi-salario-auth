@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { isValidElement, useEffect, type JSX } from 'react';
+import { isValidElement, useEffect, useRef, type JSX } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { type Table } from '@tanstack/react-table';
 
@@ -28,6 +28,7 @@ type MultiFilterButtonProps<TData> = {
  * Permite seleccionar múltiples opciones para filtrar los datos.
  *
  * - Se pueden definir opciones con la propiedad `defaultSelected` para que aparezcan seleccionadas al inicio.
+ * - Si las opciones cambian (por ejemplo, porque se cargan de forma asíncrona), las opciones nuevas con `defaultSelected` se agregan a la selección actual.
  * - Cuando no hay nada seleccionado, se establece el filtro como un arreglo vacío, lo que hará que la tabla no muestre nada.
  *
  * @component
@@ -38,24 +39,28 @@ const MultiFilterButton = <TData,>({ table, columnId, options, label, className 
   const column = table.getColumn(columnId);
   const currentFilterValue = column?.getFilterValue() as string[] | undefined;
   const selectedValues = currentFilterValue || [];
+  const knownValuesRef = useRef<Set<string> | null>(null);
 
   useEffect(() => {
     if (!column) return;
-    if (currentFilterValue) return;
 
-    if (options.some(option => option.defaultSelected)) {
-      const defaultOptions = options
-        .filter(option => option.defaultSelected)
-        .map(option => option.value);
-      column.setFilterValue(defaultOptions);
-    } else {
-      column.setFilterValue([]);
-    }
-  }, [column, currentFilterValue, options]);
+    const knownValues = knownValuesRef.current;
+    knownValuesRef.current = new Set([...(knownValues ?? []), ...options.map(option => option.value)]);
+
+    if (knownValues == null && column.getFilterValue() !== undefined) return;
+
+    const newDefaultValues = options
+      .filter(option => option.defaultSelected && !knownValues?.has(option.value))
+      .map(option => option.value);
+
+    if (knownValues != null && newDefaultValues.length === 0) return;
+
+    column.setFilterValue((previous: string[] | undefined) => [...new Set([...(previous ?? []), ...newDefaultValues])]);
+  }, [column, options]);
 
   if (!column) return null;
 
-  const allSelected = selectedValues.length === options.length;
+  const allSelected = options.length > 0 && options.every(option => selectedValues.includes(option.value));
 
   const handleToggleOption = (value: string) => {
     let newSelection: string[];

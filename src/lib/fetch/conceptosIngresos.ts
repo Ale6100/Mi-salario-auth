@@ -6,7 +6,6 @@ import type { ResponseBackend } from "@/types/global";
 const { VITE_BACKEND_URL } = import.meta.env;
 
 type FetchGetConceptosIngresosParams = {
-  sub: string;
   periodo?: string;
   token: string;
   signal?: AbortSignal;
@@ -14,8 +13,8 @@ type FetchGetConceptosIngresosParams = {
 
 type FetchGetConceptosIngresosResponse = ResponseBackend<ConceptoIngresosDB[]>;
 
-export const fetchConceptosIngresos = async ({ sub, periodo, token, signal }: FetchGetConceptosIngresosParams) => {
-  const query = new URLSearchParams({ sub });
+export const fetchConceptosIngresos = async ({ periodo, token, signal }: FetchGetConceptosIngresosParams) => {
+  const query = new URLSearchParams();
   if (periodo) {
     query.set("periodo", periodo);
   }
@@ -79,4 +78,22 @@ export const fetchDeleteConceptoIngresos = async ({ token, id }: FetchDeleteConc
       "Authorization": `Bearer ${token}`,
     },
   }).then(res => res.json()) as Promise<FetchDeleteConceptoIngresosResponse>;
+}
+
+type FetchCopiarConceptosIngresosParams = {
+  token: string;
+  periodoDestino: string;
+}
+
+type FetchCopiarConceptosIngresosResponse = ResponseBackend<ConceptoIngresosDB[]>;
+
+export const fetchCopiarConceptosIngresosDelMesAnterior = async ({ token, periodoDestino }: FetchCopiarConceptosIngresosParams) => {
+  return await fetch(`${VITE_BACKEND_URL}/conceptos-ingresos/copiar-periodo-anterior`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ periodo_destino: periodoDestino }),
+  }).then(res => res.json()) as Promise<FetchCopiarConceptosIngresosResponse>;
 }

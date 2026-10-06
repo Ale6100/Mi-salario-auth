@@ -14,14 +14,13 @@ export type ConceptoGastosDB = {
 }
 
 export type POSTConceptoGastos = {
-  sub: string;
   id_fuente_gasto: string;
   periodo: string;
   monto?: number;
   porcentaje_total?: number;
 };
 
-export type PUTConceptoGastos = Omit<POSTConceptoGastos, "sub">;
+export type PUTConceptoGastos = POSTConceptoGastos;
 
 export type PATCHConceptoGastos = {
   monto?: number;

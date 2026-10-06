@@ -27,7 +27,7 @@ export const useConceptosIngresos = ({ user, periodo }: UseConceptosIngresosPara
       const token = await getAccessTokenSilently();
       if (!token) return EMPTY_CONCEPTOS_INGRESOS;
 
-      const response = await fetchConceptosIngresos({ sub: user.sub, periodo, token, signal });
+      const response = await fetchConceptosIngresos({ periodo, token, signal });
       return response.data || EMPTY_CONCEPTOS_INGRESOS;
     },
     initialData: EMPTY_CONCEPTOS_INGRESOS,

@@ -1,14 +1,10 @@
 // src\hooks\usePatchSaldoReal.ts
 
 import { fetchPatchFondoEmergencia } from "@/lib/fetch/fondoEmergencia";
-import { useAuth0, type User } from "@auth0/auth0-react";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-type UsePatchSaldoRealParams = {
-  user?: User;
-}
-
-export const usePatchSaldoReal = ({ user }: UsePatchSaldoRealParams = {}) => {
+export const usePatchSaldoReal = () => {
   const { getAccessTokenSilently } = useAuth0();
   const queryClient = useQueryClient();
 
@@ -17,10 +13,7 @@ export const usePatchSaldoReal = ({ user }: UsePatchSaldoRealParams = {}) => {
       const token = await getAccessTokenSilently();
       const response = await fetchPatchFondoEmergencia({
         token,
-        data: {
-          sub: user?.sub ?? "",
-          saldo_real: value,
-        },
+        data: { saldo_real: value },
       });
       return response.data;
     },

@@ -50,7 +50,6 @@ export const DialogAddEditExpenseSource = ({ isOpen, setIsOpen, actualSources }:
     }
 
     const dataToSend: POSTFuenteGastos = {
-      sub: user.sub,
       nombre: data.nombre,
       color: data.color,
       es_indispensable: data.es_indispensable,

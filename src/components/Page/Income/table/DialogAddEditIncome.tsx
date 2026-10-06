@@ -69,7 +69,6 @@ export const DialogAddEditIncome = ({ isOpen, setIsOpen, actualIncomes, fuentesD
     }
 
     const dataToSend: POSTConceptoIngresos = {
-      sub: user.sub,
       id_fuente_ingreso: data.fuente_ingreso,
       periodo: data.periodo,
       valor: Number.parseFloat(data.valor),

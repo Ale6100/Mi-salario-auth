@@ -2,6 +2,8 @@
 
 import z from "zod";
 
+export const VALOR_NO_USADO = -1;
+
 export const formSchema = z.object({
   fuente_gasto: z.string().trim().min(1, 'La fuente de gasto es requerida'),
   periodo: z.string().trim().min(1, 'El periodo es requerido'),

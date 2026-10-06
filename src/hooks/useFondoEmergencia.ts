@@ -26,7 +26,7 @@ export const useFondoEmergencia = ({ user }: UseFondoEmergenciaParams = {}): Use
       const token = await getAccessTokenSilently();
       if (!token) return EMPTY_FONDO_EMERGENCIA;
 
-      const response = await fetchFondoEmergencia({ sub: user.sub, token, signal });
+      const response = await fetchFondoEmergencia({ token, signal });
       return response.data || EMPTY_FONDO_EMERGENCIA;
     },
     initialData: EMPTY_FONDO_EMERGENCIA,

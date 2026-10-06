@@ -11,4 +11,4 @@ export type FondoEmergenciaDB = {
   gastos_adicionales?: number;
 };
 
-export type PATCHFondoEmergencia = Partial<Omit<FondoEmergenciaDB, "_id">>;
+export type PATCHFondoEmergencia = Partial<Omit<FondoEmergenciaDB, "_id" | "sub">>;

@@ -17,10 +17,10 @@ jobs:
 
       - run: npm ci
 
-      - name: Run linting
+      - name: Run linting and tests
         id: run_lint
         continue-on-error: true
-        run: npm run lint:all
+        run: npm run lint:all && npm test
 
       - name: Send whatsApp notification on failure
         if: steps.run_lint.outcome == 'failure'
@@ -33,7 +33,7 @@ jobs:
         run: |
           REPO_NAME=$(echo "$REPO" | cut -d'/' -f2)
 
-          MESSAGE="⚠️ *ATENCIÓN:* Falló el linter del proyecto *${REPO_NAME}*.
+          MESSAGE="⚠️ *ATENCIÓN:* Falló el linter o los tests del proyecto *${REPO_NAME}*.
 
           Rama: *${BRANCH}*
 

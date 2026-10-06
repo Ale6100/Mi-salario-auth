@@ -1,9 +1,7 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-const SEPARATOR = "=".repeat(60);
-const SUB_SEPARATOR = "-".repeat(60);
-const SUB_SEPARATOR_SMALL = "-".repeat(44);
+const AVISO_MONEDA = "Todos los montos están expresados en pesos argentinos (ARS).";
 
 const formatPrice = (value: number): string => {
   return new Intl.NumberFormat("es-AR", {
@@ -44,137 +42,109 @@ type FullReportParams = {
   periods: PeriodData[];
 };
 
-const padValue = (label: string, value: string, pad: number = 44): string => {
-  return ` ${label.padEnd(pad - value.length - 1)}${value}`;
-};
-
 const monthYearFromPeriodo = (periodo: string): string => {
   const [year, month] = periodo.split("-");
   const monthName = format(new Date(Number(year), Number(month) - 1), "MMMM", { locale: es });
   return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
 };
 
-const buildPeriodSection = (incomes: Income[], expenses: Expense[]): string[] => {
+const getFechaGeneracion = () => format(new Date(), "dd/MM/yyyy HH:mm", { locale: es });
+
+const escapeCeldaMarkdown = (texto: string): string => {
+  return texto.replaceAll("|", String.raw`\|`).replaceAll(/\r?\n/g, " ");
+};
+
+const buildPeriodMarkdown = (incomes: Income[], expenses: Expense[]): string[] => {
   const totalIncomes = incomes.reduce((sum, inc) => sum + inc.valor, 0);
   const totalGastos = expenses.reduce((sum, e) => sum + e.monto, 0);
 
-  const lines: string[] = [
-    "INGRESOS DEL MES",
-    SUB_SEPARATOR,
-    ` ${"Fuente".padEnd(30)} ${"Monto".padStart(14)}`,
-    SUB_SEPARATOR_SMALL,
+  return [
+    "### Ingresos",
+    "",
     ...(incomes.length === 0
-      ? [` ${"Sin ingresos registrados".padEnd(44)}`]
-      : incomes.map((inc) => ` ${inc.fuente.padEnd(30)} ${formatPrice(inc.valor).padStart(14)}`)),
-    SUB_SEPARATOR_SMALL,
-    padValue("TOTAL INGRESOS", formatPrice(totalIncomes)),
+      ? ["Sin ingresos registrados."]
+      : [
+        "| Fuente | Monto |",
+        "| --- | ---: |",
+        ...incomes.map((inc) => `| ${escapeCeldaMarkdown(inc.fuente)} | ${formatPrice(inc.valor)} |`),
+      ]),
     "",
-    "GASTOS DEL MES",
-    SUB_SEPARATOR,
-    ` ${"Fuente".padEnd(30)} ${"Monto".padStart(14)}`,
-    SUB_SEPARATOR_SMALL,
+    `**Total ingresos:** ${formatPrice(totalIncomes)}`,
+    "",
+    "### Gastos",
+    "",
     ...(expenses.length === 0
-      ? [` ${"Sin gastos registrados".padEnd(44)}`]
-      : expenses.map((exp) => {
-        const line = ` ${exp.fuente.padEnd(30)} ${formatPrice(exp.monto).padStart(14)}`;
-        if (exp.aclaracion) {
-          return `${line}
- ${`→ ${exp.aclaracion}`.padEnd(46)}`;
-        }
-        return line;
-      })),
-    SUB_SEPARATOR_SMALL,
-    padValue("TOTAL GASTOS", formatPrice(totalGastos)),
+      ? ["Sin gastos registrados."]
+      : [
+        "| Fuente | Monto | Aclaración |",
+        "| --- | ---: | --- |",
+        ...expenses.map((exp) => `| ${escapeCeldaMarkdown(exp.fuente)} | ${formatPrice(exp.monto)} | ${escapeCeldaMarkdown(exp.aclaracion ?? "")} |`),
+      ]),
     "",
+    `**Total gastos:** ${formatPrice(totalGastos)}`,
   ];
-
-  return lines;
 };
 
 export const generateReport = ({ month, year, incomes, expenses }: SingleReportParams): string => {
   const monthYear = monthYearFromPeriodo(`${year}-${month}`);
-  const now = format(new Date(), "dd/MM/yyyy HH:mm", { locale: es });
 
-  const periodLines = buildPeriodSection(incomes, expenses);
-
-  const allLines: string[] = [
-    SEPARATOR,
-    `           REPORTE FINANCIERO MENSUAL`,
-    `           ${monthYear}`,
-    SEPARATOR,
+  const lines: string[] = [
+    "# Reporte financiero mensual",
     "",
-    ...periodLines,
+    AVISO_MONEDA,
     "",
-    SEPARATOR,
-    ` Generado el: ${now}`,
-    SEPARATOR,
+    `- **Generado el:** ${getFechaGeneracion()}`,
+    "",
+    `## ${monthYear}`,
+    "",
+    ...buildPeriodMarkdown(incomes, expenses),
+    "",
   ];
 
-  return allLines.join("\n");
+  return lines.join("\n");
 };
 
 export const generateFullReport = ({ periods }: FullReportParams): string => {
-  const now = format(new Date(), "dd/MM/yyyy HH:mm", { locale: es });
   const firstPeriodo = periods.at(0)?.periodo;
   const lastPeriodo = periods.at(-1)?.periodo;
 
-  let globalIncome = 0;
-  let globalGastos = 0;
+  const globalIncome = periods.reduce((sum, p) => sum + p.incomes.reduce((s, i) => s + i.valor, 0), 0);
+  const globalGastos = periods.reduce((sum, p) => sum + p.expenses.reduce((s, e) => s + e.monto, 0), 0);
 
-  const allLines: string[] = [
-    SEPARATOR,
-    `           REPORTE FINANCIERO COMPLETO`,
-    `           Todo el historial`,
-    SEPARATOR,
+  const promedio = (total: number) => periods.length > 0 ? total / periods.length : 0;
+
+  const lines: string[] = [
+    "# Reporte financiero completo",
     "",
-    ` Períodos: ${periods.length}`,
-    ` Desde: ${firstPeriodo ? monthYearFromPeriodo(firstPeriodo) : "-"}`,
-    ` Hasta: ${lastPeriodo ? monthYearFromPeriodo(lastPeriodo) : "-"}`,
+    AVISO_MONEDA,
     "",
-    "=".repeat(60),
+    `- **Períodos:** ${periods.length}`,
+    `- **Desde:** ${firstPeriodo ? monthYearFromPeriodo(firstPeriodo) : "-"}`,
+    `- **Hasta:** ${lastPeriodo ? monthYearFromPeriodo(lastPeriodo) : "-"}`,
+    `- **Generado el:** ${getFechaGeneracion()}`,
   ];
 
   for (const period of periods) {
-    const label = monthYearFromPeriodo(period.periodo);
-    const inc = period.incomes.reduce((s, i) => s + i.valor, 0);
-    const gastos = period.expenses.reduce((s, e) => s + e.monto, 0);
-
-    globalIncome += inc;
-    globalGastos += gastos;
-
-    const sectionLines = buildPeriodSection(period.incomes, period.expenses);
-
-    allLines.push(
+    lines.push(
       "",
-      `  PERIODO: ${label}`,
-      "=".repeat(60),
+      `## ${monthYearFromPeriodo(period.periodo)}`,
       "",
-      ...sectionLines,
-      "",
+      ...buildPeriodMarkdown(period.incomes, period.expenses),
     );
   }
 
-  allLines.push(
-    SEPARATOR,
-    `           RESUMEN GLOBAL`,
-    SEPARATOR,
+  lines.push(
     "",
-    "ACUMULADO DE TODOS LOS PERIODOS",
-    SUB_SEPARATOR,
-    padValue("Total ingresos", formatPrice(globalIncome)),
-    padValue("Total gastos", formatPrice(globalGastos)),
+    "## Resumen global",
+    "",
+    "| Indicador | Monto |",
+    "| --- | ---: |",
+    `| Total ingresos | ${formatPrice(globalIncome)} |`,
+    `| Total gastos | ${formatPrice(globalGastos)} |`,
+    `| Promedio ingresos / mes | ${formatPrice(promedio(globalIncome))} |`,
+    `| Promedio gastos / mes | ${formatPrice(promedio(globalGastos))} |`,
+    "",
   );
 
-  allLines.push(
-    "",
-    "INDICADORES GLOBALES",
-    SUB_SEPARATOR,
-    ` ${"Períodos totales:".padEnd(30)} ${String(periods.length).padStart(10)}`,
-    ` ${"Promedio ingresos / mes:".padEnd(30)} ${formatPrice(periods.length > 0 ? globalIncome / periods.length : 0).padStart(14)}`,
-    ` ${"Promedio gastos / mes:".padEnd(30)} ${formatPrice(periods.length > 0 ? globalGastos / periods.length : 0).padStart(14)}`,
-  );
-
-  allLines.push("", SEPARATOR, ` Generado el: ${now}`, SEPARATOR);
-
-  return allLines.join("\n");
+  return lines.join("\n");
 };

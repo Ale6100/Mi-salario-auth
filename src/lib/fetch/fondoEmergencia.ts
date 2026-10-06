@@ -6,17 +6,14 @@ import type { ResponseBackend } from "@/types/global";
 const { VITE_BACKEND_URL } = import.meta.env;
 
 type FetchGetFondoEmergenciaParams = {
-  sub: string;
   token: string;
   signal?: AbortSignal;
 }
 
 type FetchGetFondoEmergenciaResponse = ResponseBackend<FondoEmergenciaDB>;
 
-export const fetchFondoEmergencia = async ({ sub, token, signal }: FetchGetFondoEmergenciaParams) => {
-  const queryString = new URLSearchParams({ sub }).toString();
-
-  return await fetch(`${VITE_BACKEND_URL}/fondo-emergencia?${queryString}`, {
+export const fetchFondoEmergencia = async ({ token, signal }: FetchGetFondoEmergenciaParams) => {
+  return await fetch(`${VITE_BACKEND_URL}/fondo-emergencia`, {
     headers: {
       "Authorization": `Bearer ${token}`,
     },

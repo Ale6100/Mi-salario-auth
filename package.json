@@ -8,7 +8,10 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "lint:all": "eslint . && tsc -b && node -e \"console.log('\\x1b[32m✔ No se detectaron errores ni advertencias\\x1b[0m')\"",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "agents:update": "git fetch -q --depth 1 https://github.com/Ale6100/Templates-IA.git main && git show FETCH_HEAD:AGENTS-template.md > AGENTS.md",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.19.0",
@@ -31,7 +34,6 @@
     "react-router": "^7.18.0",
     "react-select": "^5.10.2",
     "recharts": "^3.8.0",
-    "shadcn": "^4.11.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.1",
@@ -40,6 +42,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -48,8 +54,11 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.6.0",
+    "jsdom": "^29.1.1",
+    "shadcn": "^4.21.3",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.61.0",
-    "vite": "^8.1.0"
+    "vite": "^8.1.0",
+    "vitest": "^5.0.3"
   }
 }

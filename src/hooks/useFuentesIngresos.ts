@@ -26,7 +26,7 @@ export const useFuentesIngresos = ({ user }: UseFuentesIngresosParams = {}): Use
       const token = await getAccessTokenSilently();
       if (!token) return EMPTY_FUENTES_INGRESOS;
 
-      const response = await fetchFuentesIngresos({ sub: user.sub, token, signal });
+      const response = await fetchFuentesIngresos({ token, signal });
       return response.data || EMPTY_FUENTES_INGRESOS;
     },
     initialData: EMPTY_FUENTES_INGRESOS,

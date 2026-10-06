@@ -26,7 +26,7 @@ export const useFuentesGastos = ({ user }: UseFuentesGastosParams = {}): UseFuen
       const token = await getAccessTokenSilently();
       if (!token) return EMPTY_FUENTES_GASTOS;
 
-      const response = await fetchFuentesGastos({ sub: user.sub, token, signal });
+      const response = await fetchFuentesGastos({ token, signal });
       return response.data || EMPTY_FUENTES_GASTOS;
     },
     initialData: EMPTY_FUENTES_GASTOS,

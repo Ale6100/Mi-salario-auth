@@ -22,7 +22,7 @@ interface DataTableProps<TData , TValue> {
   sorting?: SortingState;
   sortingFns?: Record<string, SortingFn<TData>>;
   minWidthTable?: number;
-  multiFilterButton?: { columnId: string, options: Option[], label: string };
+  multiFilterButtons?: { columnId: string, options: Option[], label: string }[];
   toolbarActions?: ReactNode[];
 }
 
@@ -47,12 +47,12 @@ interface DataTableProps<TData , TValue> {
  * @param {SortingState} [props.sorting=[]] - Estado inicial de la ordenación de las columnas.
  * @param {Record<string, SortingFn<TData>>} [props.sortingFns={}] - Funciones de ordenación personalizadas para columnas específicas.
  * @param {number} [props.minWidthTable=1024] - Ancho mínimo de la tabla para mostrar la tabla en lugar de las Cards.
- * @param {{ columnId: string, options: Option[], label: string }} [props.multiFilterButton=null] - Objeto que contiene la configuración del botón de filtro múltiple. Si no se proporciona, no se mostrará el botón.
+ * @param {Array<{ columnId: string, options: Option[], label: string }>} [props.multiFilterButtons=[]] - Configuración de los botones de filtro múltiple, uno por columna. Si no se proporciona, no se mostrará ningún botón.
  * @param {ReactNode[]} [props.toolbarActions=[]] - Botones o nodos opcionales para renderizar en el encabezado de la tabla.
  *
  * @returns {JSX.Element} - Componente de tabla interactivo.
  */
-export function DataTable<TData extends object, TValue>({ className, columns, data, Card, txtPlaceholderFilter = "Filtrar...", columnsHidden = [], dataLoading = false, pageSize = 20, cantPaginasAlrededor = '2', registrosRemarcados = [], sorting = [], sortingFns = {}, minWidthTable = 1024, multiFilterButton, toolbarActions = [] }: Readonly<DataTableProps<TData, TValue>>): JSX.Element {
+export function DataTable<TData extends object, TValue>({ className, columns, data, Card, txtPlaceholderFilter = "Filtrar...", columnsHidden = [], dataLoading = false, pageSize = 20, cantPaginasAlrededor = '2', registrosRemarcados = [], sorting = [], sortingFns = {}, minWidthTable = 1024, multiFilterButtons = [], toolbarActions = [] }: Readonly<DataTableProps<TData, TValue>>): JSX.Element {
   const [ sortingData, setSortingData ] = useState<SortingState>(sorting)
   const [ columnVisibility, setColumnVisibility ] = useState<VisibilityState>(columnsHidden.reduce((acc, column) => ({ ...acc, [column]: false }), {}))
   const [ filtering, setFiltering ] = useState<string>("")
@@ -130,11 +130,9 @@ export function DataTable<TData extends object, TValue>({ className, columns, da
           <Input id="input-26" className="peer ps-9 text-xs" placeholder={txtPlaceholderFilter} type="search" value={inputValue} onChange={handleInputFilter} title="Filtrar resultados" />
         </div>
 
-        {
-          multiFilterButton && (
-            <MultiFilterButton table={table} className={"max-h-96"} columnId={multiFilterButton.columnId} options={multiFilterButton.options} label={multiFilterButton.label} />
-          )
-        }
+        {multiFilterButtons.map(({ columnId, options, label }) => (
+          <MultiFilterButton key={columnId} table={table} className={"max-h-96"} columnId={columnId} options={options} label={label} />
+        ))}
 
         {toolbarActions.map((action, index) => (
           <div key={index} className='flex justify-end'>

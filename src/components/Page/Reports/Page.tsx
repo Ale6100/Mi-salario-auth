@@ -2,9 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, FileText, History } from "lucide-react";
+import { Download, FileText, History, TrendingUp } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { generateReport, generateFullReport } from "./util";
+import { Graph } from "./graph/Graph";
 import { Separator } from "@/components/ui/separator";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useConceptosGastos } from "@/hooks/useConceptosGastos";
@@ -130,12 +131,12 @@ export const ReportsPage = () => {
       expenses: reportData.expensesData,
     });
 
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     const monthName = MONTHS[Number(selectedMonth) - 1];
     a.href = url;
-    a.download = `reporte-financiero-${selectedYear}-${selectedMonth}-${monthName.toLowerCase()}.txt`;
+    a.download = `reporte-financiero-${selectedYear}-${selectedMonth}-${monthName.toLowerCase()}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -143,11 +144,11 @@ export const ReportsPage = () => {
   const handleDownloadFull = () => {
     const text = generateFullReport({ periods: fullReportPeriods });
 
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `reporte-financiero-completo.txt`;
+    a.download = `reporte-financiero-completo.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -235,6 +236,24 @@ export const ReportsPage = () => {
               <Download className="size-4" />
               Descargar historial completo ({fullReportPeriods.length} períodos)
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {fullReportPeriods.length > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <TrendingUp className="size-5" />
+              Evolución real (ajustada por inflación)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isFetching ? (
+              <p className="text-muted-foreground text-sm text-center py-8">Cargando datos...</p>
+            ) : (
+              <Graph incomes={allIncomes} expenses={allExpenses} />
+            )}
           </CardContent>
         </Card>
       )}

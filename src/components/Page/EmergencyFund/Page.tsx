@@ -8,10 +8,12 @@ import { formatPrice } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useConceptosGastos } from "@/hooks/useConceptosGastos";
 import { useConceptosIngresos } from "@/hooks/useConceptosIngresos";
+import { useCotizacionDolarMep } from "@/hooks/useCotizacionDolarMep";
 import { useFondoEmergencia } from "@/hooks/useFondoEmergencia";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { PATCHFondoEmergencia } from "@/types/fondoEmergencia";
@@ -44,6 +46,7 @@ export const EmergencyFundPage = () => {
   const queryClient = useQueryClient();
 
   const { data, isFetching } = useFondoEmergencia({ user });
+  const { data: cotizacionMep, isError: isErrorCotizacion } = useCotizacionDolarMep();
 
   const { data: ingresosMesActual, isFetching: isFetchingIngresosMesActual } = useConceptosIngresos({
     user,
@@ -76,6 +79,7 @@ export const EmergencyFundPage = () => {
 
   const [montoPesos, setMontoPesos] = useState(0);
   const [montoDolares, setMontoDolares] = useState(0);
+  const [incluirDolares, setIncluirDolares] = useState(false);
   const [porcentajeTotal, setPorcentajeTotal] = useState(66.66);
   const [gastosAdicionales, setGastosAdicionales] = useState(0);
   const initializedRef = useRef(false);
@@ -87,6 +91,7 @@ export const EmergencyFundPage = () => {
     if (data) {
       setMontoPesos(data.monto_pesos ?? 0);
       setMontoDolares(data.monto_dolares ?? 0);
+      setIncluirDolares(data.incluir_dolares ?? false);
       setPorcentajeTotal(data.porcentaje_total ?? 66.66);
       setGastosAdicionales(data.gastos_adicionales ?? 0);
     }
@@ -94,7 +99,7 @@ export const EmergencyFundPage = () => {
   }, [data, isFetching]);
 
   const patchMutation = useMutation({
-    mutationFn: async (patchData: PATCHFondoEmergencia & { sub: string }) => {
+    mutationFn: async (patchData: PATCHFondoEmergencia) => {
       const token = await getAccessTokenSilently();
       const response = await fetchPatchFondoEmergencia({ token, data: patchData });
       if (response.statusCode !== 200) throw new Error("Error al guardar");
@@ -117,23 +122,26 @@ export const EmergencyFundPage = () => {
     debounceRef.current = globalThis.setTimeout(() => {
       if (!user?.sub) return;
       patchMutation.mutate({
-        sub: user.sub,
         monto_pesos: Number(montoPesos),
         monto_dolares: Number(montoDolares),
-        incluir_dolares: false, // Por ahora no se usa
+        incluir_dolares: incluirDolares,
         porcentaje_total: Number(porcentajeTotal),
         gastos_adicionales: Number(gastosAdicionales),
       });
     }, 800);
-  }, [montoPesos, montoDolares, porcentajeTotal, gastosAdicionales, patchMutation]);
+  }, [montoPesos, montoDolares, incluirDolares, porcentajeTotal, gastosAdicionales, patchMutation]);
 
   useEffect(() => {
+    if (!isDirty) return;
     save();
     return () => {
       if (debounceRef.current) globalThis.clearTimeout(debounceRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [montoPesos, montoDolares, porcentajeTotal, gastosAdicionales]);
+  }, [montoPesos, montoDolares, incluirDolares, porcentajeTotal, gastosAdicionales]);
+
+  const dolaresEnPesos = cotizacionMep ? montoDolares * cotizacionMep.compra : 0;
+  const fondoTotal = montoPesos + (incluirDolares ? dolaresEnPesos : 0);
 
   const gastosProteccionMensual = totalGastosIndispensables + gastosAdicionales;
   const excedenteMensual = Math.max(0, ingresosTotalesDelMes - totalGastosDelMes);
@@ -150,7 +158,7 @@ export const EmergencyFundPage = () => {
       target: gastosProteccionMensual * m.meses,
     }));
 
-    const currentIndex = targets.findIndex((m) => montoPesos < m.target);
+    const currentIndex = targets.findIndex((m) => fondoTotal < m.target);
 
     if (currentIndex === -1) {
       return {
@@ -169,10 +177,10 @@ export const EmergencyFundPage = () => {
       isAllCompleted: false,
       hasExpenses: true,
     };
-  }, [gastosProteccionMensual, montoPesos]);
+  }, [gastosProteccionMensual, fondoTotal]);
 
   const progress = milestoneData.current
-    ? Math.min(100, (montoPesos / milestoneData.current.target) * 100)
+    ? Math.min(100, (fondoTotal / milestoneData.current.target) * 100)
     : 0;
 
   const handleMontoPesosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,6 +192,11 @@ export const EmergencyFundPage = () => {
   const handleMontoDolaresChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value === "" ? 0 : Number.parseFloat(e.target.value);
     setMontoDolares(Number.isNaN(value) ? 0 : value);
+    setIsDirty(true);
+  };
+
+  const handleIncluirDolaresChange = (checked: boolean) => {
+    setIncluirDolares(checked);
     setIsDirty(true);
   };
 
@@ -278,7 +291,7 @@ export const EmergencyFundPage = () => {
 
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">
-                  {formatPrice(montoPesos)}
+                  {formatPrice(fondoTotal)}
                 </span>
                 <span className="text-muted-foreground">
                   de {milestoneData.current && formatPrice(milestoneData.current.target)}
@@ -335,7 +348,10 @@ export const EmergencyFundPage = () => {
           <CardContent className="flex flex-col items-center gap-1 py-4 text-center">
             <PiggyBank className="size-6 text-primary" />
             <p className="text-xs text-muted-foreground font-medium">Fondo actual</p>
-            <p className="text-lg font-bold">{formatPrice(montoPesos)}</p>
+            <p className="text-lg font-bold">{formatPrice(fondoTotal)}</p>
+            {incluirDolares && dolaresEnPesos > 0 && (
+              <p className="text-xs text-muted-foreground">Incluye tus dólares convertidos a pesos</p>
+            )}
           </CardContent>
         </Card>
 
@@ -344,6 +360,9 @@ export const EmergencyFundPage = () => {
             <DollarSign className="size-6 text-amber-600 dark:text-amber-400" />
             <p className="text-xs text-muted-foreground font-medium">Reserva en USD</p>
             <p className="text-lg font-bold">{formatUSD(montoDolares)}</p>
+            {cotizacionMep && montoDolares > 0 && (
+              <p className="text-xs text-muted-foreground">≈ {formatPrice(dolaresEnPesos)}</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -415,8 +434,28 @@ export const EmergencyFundPage = () => {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                No es parte del fondo de emergencia, es el total de tus ahorros en dólares.
+                Es el total de tus ahorros en dólares. Solo forma parte del fondo de emergencia si activás la opción de abajo.
               </p>
+              <div className="flex items-center justify-between gap-3 pt-1">
+                <Label htmlFor="incluir-dolares" className="text-sm font-normal">
+                  Sumar los dólares al fondo de emergencia
+                </Label>
+                <Switch
+                  id="incluir-dolares"
+                  checked={incluirDolares}
+                  onCheckedChange={handleIncluirDolaresChange}
+                />
+              </div>
+              {cotizacionMep && (
+                <p className="text-xs text-muted-foreground">
+                  Se convierten con el dólar MEP (precio de compra): {formatPrice(cotizacionMep.compra)} por dólar.
+                </p>
+              )}
+              {incluirDolares && isErrorCotizacion && (
+                <p className="text-xs text-amber-600">
+                  No se pudo obtener la cotización del dólar, así que los dólares no se están sumando al fondo.
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">

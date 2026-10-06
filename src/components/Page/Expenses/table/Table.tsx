@@ -2,15 +2,16 @@
 
 import type { BtnAlertActionConfig } from "@/components/utils/AlertAction";
 import { useFuentesGastos } from "@/hooks/useFuentesGastos";
-import { fetchDeleteConceptoGastos } from "@/lib/fetch/conceptosGastos";
+import { fetchCopiarConceptosGastosDelMesAnterior, fetchDeleteConceptoGastos } from "@/lib/fetch/conceptosGastos";
 import type { ConceptoGastosDB } from "@/types/conceptosGastos";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { createColumns } from "./columns";
+import { createColumns, createFuenteFilterOptions, ESTADO_COLUMN_ID, estadoFilterOptions, FUENTE_COLUMN_ID } from "./columns";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CopyPreviousMonthButton } from "@/components/table/CopyPreviousMonthButton";
 import { DataTable } from "@/components/utils/DataTable";
 import AlertAction from "@/components/utils/AlertAction";
 import { DialogAddEditExpense } from "./DialogAddEditExpense";
@@ -76,12 +77,19 @@ export const Table = ({ data, isFetching }: TableProps) => {
 
   const columns = useMemo(() => createColumns({ handleEdit, handleDelete, handleEditPagado, isFetching: isFetching || isFetchingFuentes }), [isFetching, isFetchingFuentes]);
 
+  const multiFilterButtons = useMemo(() => [
+    { columnId: FUENTE_COLUMN_ID, options: createFuenteFilterOptions(data), label: "Fuente" },
+    { columnId: ESTADO_COLUMN_ID, options: estadoFilterOptions, label: "Estado" },
+  ], [data]);
+
   const ButtonAddExpense = <Button onClick={() => setIsOpenAddEditDialog({ status: true, expense: undefined })} className="cursor-pointer" disabled={isFetchingFuentes || isFetching}>Agregar</Button>
+
+  const ButtonCopyPreviousMonth = <CopyPreviousMonthButton concepto="gastos" queryKey="conceptos-gastos" copiar={fetchCopiarConceptosGastosDelMesAnterior} disabled={isFetching} />
 
   return (
     <>
     <Card className='p-4 bg-card rounded-xl shadow-md'>
-      <DataTable columns={columns} data={data} dataLoading={isFetching} toolbarActions={[ButtonAddExpense]} sorting={sorting} />
+      <DataTable columns={columns} data={data} dataLoading={isFetching} toolbarActions={[ButtonCopyPreviousMonth, ButtonAddExpense]} sorting={sorting} multiFilterButtons={multiFilterButtons} />
     </Card>
 
     {

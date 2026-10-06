@@ -53,7 +53,6 @@ export const DialogAddEditIncomeSource = ({ isOpen, setIsOpen, actualSources }: 
     }
 
     const dataToSend: POSTFuenteIngresos = {
-      sub: user.sub,
       nombre: data.nombre,
       activo: data.aguinaldo ? false : data.activo,
       aguinaldo: data.aguinaldo,

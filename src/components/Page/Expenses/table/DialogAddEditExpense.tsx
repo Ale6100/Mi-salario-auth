@@ -7,7 +7,7 @@ import { fetchPostConceptoGastos, fetchPutConceptoGastos } from "@/lib/fetch/con
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { format } from "date-fns";
 import { FormatFuenteOptionLabel } from "@/components/select/FormatFuenteOptionLabel";
-import { formSchema, type FormSchema } from "./util";
+import { formSchema, VALOR_NO_USADO, type FormSchema } from "./util";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
@@ -54,14 +54,17 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
 
   const isEdit = isOpen.expense != null;
 
+  const porcentajeTotal = isOpen.expense?.porcentaje_total;
+  const usaPorcentaje = porcentajeTotal != null && porcentajeTotal !== VALOR_NO_USADO;
+
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       fuente_gasto: isEdit ? isOpen.expense?.id_fuente_gasto?._id ?? "" : "",
       periodo: isEdit ? isOpen.expense?.periodo ?? "" : currentMonth,
       monto: isEdit && isOpen.expense?.monto != null && isOpen.expense.monto !== -1 ? isOpen.expense.monto.toString() : "",
-      modo_porcentaje: isEdit ? isOpen.expense?.porcentaje_total != null : false,
-      porcentaje: isEdit && isOpen.expense?.porcentaje_total != null ? isOpen.expense.porcentaje_total.toString() : "1",
+      modo_porcentaje: isEdit ? usaPorcentaje : false,
+      porcentaje: isEdit && usaPorcentaje ? porcentajeTotal.toString() : "1",
     }
   });
 
@@ -78,7 +81,6 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
     }
 
     const dataToSend: POSTConceptoGastos = {
-      sub: user.sub,
       id_fuente_gasto: data.fuente_gasto,
       periodo: data.periodo,
       monto: data.modo_porcentaje ? undefined : Number.parseFloat(data.monto || '0'),
@@ -116,8 +118,8 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
     const dataToSend: PUTConceptoGastos = {
       id_fuente_gasto: data.fuente_gasto,
       periodo: data.periodo,
-      monto: data.modo_porcentaje ? undefined : Number.parseFloat(data.monto || '0'),
-      porcentaje_total: data.modo_porcentaje ? Number.parseFloat(data.porcentaje || '0') : undefined,
+      monto: data.modo_porcentaje ? VALOR_NO_USADO : Number.parseFloat(data.monto || '0'),
+      porcentaje_total: data.modo_porcentaje ? Number.parseFloat(data.porcentaje || '0') : VALOR_NO_USADO,
     }
 
     toast.loading("Espere...", { id: toastId });

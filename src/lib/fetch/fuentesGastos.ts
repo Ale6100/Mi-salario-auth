@@ -6,17 +6,14 @@ import type { ResponseBackend } from "@/types/global";
 const { VITE_BACKEND_URL } = import.meta.env;
 
 type FetchGetFuentesGastosParams = {
-  sub: string;
   token: string;
   signal?: AbortSignal;
 };
 
 type FetchGetFuentesGastosResponse = ResponseBackend<FuenteGastosDB[]>;
 
-export const fetchFuentesGastos = async ({ sub, token, signal }: FetchGetFuentesGastosParams) => {
-  const queryString = new URLSearchParams({ sub }).toString();
-
-  return await fetch(`${VITE_BACKEND_URL}/fuentes-gastos?${queryString}`, {
+export const fetchFuentesGastos = async ({ token, signal }: FetchGetFuentesGastosParams) => {
+  return await fetch(`${VITE_BACKEND_URL}/fuentes-gastos`, {
     headers: {
       "Authorization": `Bearer ${token}`,
     },
