@@ -1,7 +1,9 @@
 // src\hooks\usePatchSaldoReal.ts
 
 import { fetchPatchFondoEmergencia } from "@/lib/fetch/fondoEmergencia";
+import { getDataOrThrow } from "@/lib/fetch/backend";
 import { useAuth0 } from "@auth0/auth0-react";
+import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const usePatchSaldoReal = () => {
@@ -15,10 +17,13 @@ export const usePatchSaldoReal = () => {
         token,
         data: { saldo_real: value },
       });
-      return response.data;
+      return getDataOrThrow(response);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["fondo-emergencia"] });
+    },
+    onError: () => {
+      toast.error("No se pudo guardar el saldo real");
     },
   });
 }

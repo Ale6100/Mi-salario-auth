@@ -1,6 +1,7 @@
 // src\components\Page\Expenses\Page.tsx
 
 import { format } from "date-fns";
+import { MENSAJE_ERROR_CARGA } from "@/lib/const";
 import { Graph } from "./graph/Graph";
 import { Separator } from "@/components/ui/separator";
 import { Table } from "./table/Table";
@@ -12,8 +13,9 @@ import { useMemo } from "react";
 export const ExpensesPage = () => {
   const { user } = useAuth0();
 
-  const { data: ingresosMesActual, isFetching: isFetchingIngresosMesActual } = useConceptosIngresos({ user, periodo: format(new Date(), 'yyyy-MM') });
-  const { data, isFetching } = useConceptosGastos({ user });
+  const { data: ingresosMesActual, isPending: isPendingIngresosMesActual, isLoadingError: isErrorIngresosMesActual } = useConceptosIngresos({ user, periodo: format(new Date(), 'yyyy-MM') });
+  const { data, isPending, isFetching, isLoadingError: isErrorGastos } = useConceptosGastos({ user });
+  const isError = isErrorGastos || isErrorIngresosMesActual;
 
   const ingresosTotalesDelMes = useMemo(() => {
     if (!ingresosMesActual?.length) return 0;
@@ -21,10 +23,18 @@ export const ExpensesPage = () => {
   }, [ingresosMesActual]);
 
   const graphContent = () => {
-    if (isFetching || isFetchingIngresosMesActual) {
+    if (isPending || isPendingIngresosMesActual) {
       return (
         <div className="flex justify-center items-center">
           <p className="text-muted-foreground text-sm">Cargando...</p>
+        </div>
+      );
+    }
+
+    if (isError) {
+      return (
+        <div className="flex justify-center items-center">
+          <p className="text-muted-foreground text-sm">{MENSAJE_ERROR_CARGA}</p>
         </div>
       );
     }
@@ -51,7 +61,7 @@ export const ExpensesPage = () => {
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight">Gestionar gastos</h2>
-        <Table data={data} isFetching={isFetching} />
+        <Table data={data} isPending={isPending} isFetching={isFetching} />
       </section>
     </section>
   )

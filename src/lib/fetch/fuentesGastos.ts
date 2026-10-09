@@ -1,24 +1,15 @@
 // src\lib\fetch\fuentesGastos.ts
 
 import type { FuenteGastosDB, POSTFuenteGastos, PUTFuenteGastos } from "@/types/fuentesGastos";
-import type { ResponseBackend } from "@/types/global";
-
-const { VITE_BACKEND_URL } = import.meta.env;
+import { requestBackend } from "./backend";
 
 type FetchGetFuentesGastosParams = {
   token: string;
   signal?: AbortSignal;
-};
-
-type FetchGetFuentesGastosResponse = ResponseBackend<FuenteGastosDB[]>;
+}
 
 export const fetchFuentesGastos = async ({ token, signal }: FetchGetFuentesGastosParams) => {
-  return await fetch(`${VITE_BACKEND_URL}/fuentes-gastos`, {
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-    signal,
-  }).then(res => res.json()) as Promise<FetchGetFuentesGastosResponse>;
+  return await requestBackend<FuenteGastosDB[]>("/fuentes-gastos", { token, signal });
 }
 
 type FetchPostFuenteGastosParams = {
@@ -26,17 +17,8 @@ type FetchPostFuenteGastosParams = {
   data: POSTFuenteGastos;
 }
 
-type FetchPostFuenteGastosResponse = ResponseBackend<FuenteGastosDB>;
-
 export const fetchPostFuenteGastos = async ({ token, data }: FetchPostFuenteGastosParams) => {
-  return await fetch(`${VITE_BACKEND_URL}/fuentes-gastos`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  }).then(res => res.json()) as Promise<FetchPostFuenteGastosResponse>;
+  return await requestBackend<FuenteGastosDB>("/fuentes-gastos", { token, method: "POST", body: data });
 }
 
 type FetchPutFuenteGastosParams = {
@@ -45,17 +27,8 @@ type FetchPutFuenteGastosParams = {
   data: PUTFuenteGastos;
 }
 
-type FetchPutFuenteGastosResponse = ResponseBackend<FuenteGastosDB>;
-
 export const fetchPutFuenteGastos = async ({ token, id, data }: FetchPutFuenteGastosParams) => {
-  return await fetch(`${VITE_BACKEND_URL}/fuentes-gastos/${id}`, {
-    method: "PUT",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  }).then(res => res.json()) as Promise<FetchPutFuenteGastosResponse>;
+  return await requestBackend<FuenteGastosDB>(`/fuentes-gastos/${id}`, { token, method: "PUT", body: data });
 }
 
 type FetchDeleteFuenteGastosParams = {
@@ -63,13 +36,6 @@ type FetchDeleteFuenteGastosParams = {
   id: string;
 }
 
-type FetchDeleteFuenteGastosResponse = ResponseBackend<null>;
-
 export const fetchDeleteFuenteGastos = async ({ token, id }: FetchDeleteFuenteGastosParams) => {
-  return await fetch(`${VITE_BACKEND_URL}/fuentes-gastos/${id}`, {
-    method: "DELETE",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-  }).then(res => res.json()) as Promise<FetchDeleteFuenteGastosResponse>;
+  return await requestBackend<null>(`/fuentes-gastos/${id}`, { token, method: "DELETE" });
 }

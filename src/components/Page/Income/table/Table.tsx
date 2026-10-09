@@ -18,10 +18,11 @@ import type { ConceptoIngresosDB } from "@/types/conceptosIngresos";
 
 type TableProps = {
   readonly data: ConceptoIngresosDB[];
+  readonly isPending: boolean;
   readonly isFetching: boolean;
 }
 
-export const Table = ({ data, isFetching }: TableProps) => {
+export const Table = ({ data, isPending, isFetching }: TableProps) => {
   const { user, getAccessTokenSilently } = useAuth0();
 
   const toastId = useId();
@@ -78,7 +79,7 @@ export const Table = ({ data, isFetching }: TableProps) => {
   return (
     <>
     <Card className='p-4 bg-card rounded-xl shadow-md'>
-      <DataTable columns={columns} data={data} dataLoading={isFetching} toolbarActions={[ButtonCopyPreviousMonth, ButtonAddIncome]} sorting={sorting} />
+      <DataTable columns={columns} data={data} dataLoading={isPending} toolbarActions={[ButtonCopyPreviousMonth, ButtonAddIncome]} sorting={sorting} />
     </Card>
 
     {

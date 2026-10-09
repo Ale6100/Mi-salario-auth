@@ -1,6 +1,7 @@
 // src\hooks\useConceptosGastos.ts
 
 import { fetchConceptosGastos } from "@/lib/fetch/conceptosGastos";
+import { getDataOrThrow } from "@/lib/fetch/backend";
 import { useAuth0, type User } from "@auth0/auth0-react";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import type { ConceptoGastosDB } from "@/types/conceptosGastos";
@@ -28,13 +29,12 @@ export const useConceptosGastos = ({ user, periodo }: UseConceptosGastosParams =
       if (!token) return EMPTY_CONCEPTOS_GASTOS;
 
       const response = await fetchConceptosGastos({ periodo, token, signal });
-      return response.data || EMPTY_CONCEPTOS_GASTOS;
+      return getDataOrThrow(response) ?? EMPTY_CONCEPTOS_GASTOS;
     },
-    initialData: EMPTY_CONCEPTOS_GASTOS,
     retry: 2,
     refetchOnWindowFocus: false,
     enabled: Boolean(user?.sub),
   })
 
-  return query
+  return { ...query, data: query.data ?? EMPTY_CONCEPTOS_GASTOS }
 }

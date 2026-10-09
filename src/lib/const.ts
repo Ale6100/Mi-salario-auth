@@ -11,3 +11,5 @@ export const RUTAS = {
     expenseSources: "/configuration/expense-sources",
   }
 }
+
+export const MENSAJE_ERROR_CARGA = "No se pudieron cargar los datos. Intentá de nuevo más tarde.";

@@ -1,6 +1,7 @@
 // src\hooks\useFuentesGastos.ts
 
 import { fetchFuentesGastos } from "@/lib/fetch/fuentesGastos";
+import { getDataOrThrow } from "@/lib/fetch/backend";
 import { useAuth0, type User } from "@auth0/auth0-react";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import type { FuenteGastosDB } from "@/types/fuentesGastos";
@@ -27,13 +28,12 @@ export const useFuentesGastos = ({ user }: UseFuentesGastosParams = {}): UseFuen
       if (!token) return EMPTY_FUENTES_GASTOS;
 
       const response = await fetchFuentesGastos({ token, signal });
-      return response.data || EMPTY_FUENTES_GASTOS;
+      return getDataOrThrow(response) ?? EMPTY_FUENTES_GASTOS;
     },
-    initialData: EMPTY_FUENTES_GASTOS,
     retry: 2,
     refetchOnWindowFocus: false,
     enabled: Boolean(user?.sub),
   })
 
-  return query
+  return { ...query, data: query.data ?? EMPTY_FUENTES_GASTOS }
 }

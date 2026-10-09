@@ -19,10 +19,11 @@ import { DialogEditPagado } from "./DialogEditPagado";
 
 type TableProps = {
   readonly data: ConceptoGastosDB[];
+  readonly isPending: boolean;
   readonly isFetching: boolean;
 }
 
-export const Table = ({ data, isFetching }: TableProps) => {
+export const Table = ({ data, isPending, isFetching }: TableProps) => {
   const { user, getAccessTokenSilently } = useAuth0();
 
   const toastId = useId();
@@ -89,7 +90,7 @@ export const Table = ({ data, isFetching }: TableProps) => {
   return (
     <>
     <Card className='p-4 bg-card rounded-xl shadow-md'>
-      <DataTable columns={columns} data={data} dataLoading={isFetching} toolbarActions={[ButtonCopyPreviousMonth, ButtonAddExpense]} sorting={sorting} multiFilterButtons={multiFilterButtons} />
+      <DataTable columns={columns} data={data} dataLoading={isPending} toolbarActions={[ButtonCopyPreviousMonth, ButtonAddExpense]} sorting={sorting} multiFilterButtons={multiFilterButtons} />
     </Card>
 
     {

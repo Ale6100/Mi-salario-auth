@@ -1,6 +1,7 @@
 // src\components\Page\Reports\Page.tsx
 
 import { Button } from "@/components/ui/button";
+import { MENSAJE_ERROR_CARGA } from "@/lib/const";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileText, History, TrendingUp } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
@@ -34,8 +35,8 @@ export const ReportsPage = () => {
   const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
   const [selectedYear, setSelectedYear] = useState(defaultYear);
 
-  const { data: allExpenses, isFetching: isFetchingExpenses } = useConceptosGastos({ user });
-  const { data: allIncomes, isFetching: isFetchingAllIncomes } = useConceptosIngresos({ user });
+  const { data: allExpenses, isPending: isPendingExpenses, isFetching: isFetchingExpenses, isLoadingError: isErrorExpenses } = useConceptosGastos({ user });
+  const { data: allIncomes, isPending: isPendingAllIncomes, isFetching: isFetchingAllIncomes, isLoadingError: isErrorAllIncomes } = useConceptosIngresos({ user });
 
   const yearOptions = useMemo(() => {
     const periods = new Set<string>();
@@ -122,6 +123,20 @@ export const ReportsPage = () => {
   );
 
   const isFetching = isFetchingExpenses || isFetchingAllIncomes;
+  const isPending = isPendingExpenses || isPendingAllIncomes;
+  const isError = isErrorExpenses || isErrorAllIncomes;
+
+  const graphContent = () => {
+    if (isError) {
+      return <p className="text-muted-foreground text-sm text-center py-8">{MENSAJE_ERROR_CARGA}</p>;
+    }
+
+    if (isPending) {
+      return <p className="text-muted-foreground text-sm text-center py-8">Cargando datos...</p>;
+    }
+
+    return <Graph incomes={allIncomes} expenses={allExpenses} />;
+  };
 
   const handleDownload = () => {
     const text = generateReport({
@@ -204,7 +219,7 @@ export const ReportsPage = () => {
 
             <Button
               onClick={handleDownload}
-              disabled={isFetching}
+              disabled={isFetching || isError}
               className="cursor-pointer gap-2 shrink-0"
             >
               <Download className="size-4" />
@@ -229,7 +244,7 @@ export const ReportsPage = () => {
             </p>
             <Button
               onClick={handleDownloadFull}
-              disabled={isFetching}
+              disabled={isFetching || isError}
               variant="outline"
               className="cursor-pointer gap-2 w-full"
             >
@@ -249,11 +264,7 @@ export const ReportsPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isFetching ? (
-              <p className="text-muted-foreground text-sm text-center py-8">Cargando datos...</p>
-            ) : (
-              <Graph incomes={allIncomes} expenses={allExpenses} />
-            )}
+            {graphContent()}
           </CardContent>
         </Card>
       )}
@@ -265,9 +276,9 @@ export const ReportsPage = () => {
           Vista previa - {monthLabel}
         </h2>
 
-        {isFetching ? (
+        {isPending || isError ? (
           <div className="flex justify-center items-center py-12">
-            <p className="text-muted-foreground text-sm">Cargando datos...</p>
+            <p className="text-muted-foreground text-sm">{isError ? MENSAJE_ERROR_CARGA : "Cargando datos..."}</p>
           </div>
         ) : (
           <Card className="p-4">

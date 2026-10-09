@@ -1,6 +1,7 @@
 // src\hooks\useFondoEmergencia.ts
 
 import { fetchFondoEmergencia } from "@/lib/fetch/fondoEmergencia";
+import { getDataOrThrow } from "@/lib/fetch/backend";
 import { useAuth0, type User } from "@auth0/auth0-react";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import type { FondoEmergenciaDB } from "@/types/fondoEmergencia";
@@ -27,13 +28,12 @@ export const useFondoEmergencia = ({ user }: UseFondoEmergenciaParams = {}): Use
       if (!token) return EMPTY_FONDO_EMERGENCIA;
 
       const response = await fetchFondoEmergencia({ token, signal });
-      return response.data || EMPTY_FONDO_EMERGENCIA;
+      return getDataOrThrow(response) ?? EMPTY_FONDO_EMERGENCIA;
     },
-    initialData: EMPTY_FONDO_EMERGENCIA,
     retry: 2,
     refetchOnWindowFocus: false,
     enabled: Boolean(user?.sub),
   })
 
-  return query
+  return { ...query, data: query.data ?? EMPTY_FONDO_EMERGENCIA }
 }

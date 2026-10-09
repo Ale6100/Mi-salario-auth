@@ -1,6 +1,7 @@
 // src\components\Page\Income\Page.tsx
 
 import { Card, CardContent } from "@/components/ui/card";
+import { MENSAJE_ERROR_CARGA } from "@/lib/const";
 import { Graph } from "./graph/Graph";
 import { Separator } from "@/components/ui/separator";
 import { Table } from "./table/Table";
@@ -10,13 +11,21 @@ import { useConceptosIngresos } from "@/hooks/useConceptosIngresos";
 export const IncomePage = () => {
   const { user } = useAuth0();
 
-  const { data, isFetching } = useConceptosIngresos({ user });
+  const { data, isPending, isFetching, isLoadingError: isError } = useConceptosIngresos({ user });
 
   const graphContent = () => {
-    if (isFetching) {
+    if (isPending) {
       return (
         <div className="flex justify-center items-center">
           <p className="text-muted-foreground text-sm">Cargando...</p>
+        </div>
+      );
+    }
+
+    if (isError) {
+      return (
+        <div className="flex justify-center items-center">
+          <p className="text-muted-foreground text-sm">{MENSAJE_ERROR_CARGA}</p>
         </div>
       );
     }
@@ -58,7 +67,7 @@ export const IncomePage = () => {
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight">Gestionar ingresos</h2>
-        <Table data={data} isFetching={isFetching} />
+        <Table data={data} isPending={isPending} isFetching={isFetching} />
       </section>
     </section>
   );

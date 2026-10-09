@@ -1,24 +1,15 @@
 // src\lib\fetch\fondoEmergencia.ts
 
 import type { FondoEmergenciaDB, PATCHFondoEmergencia } from "@/types/fondoEmergencia";
-import type { ResponseBackend } from "@/types/global";
-
-const { VITE_BACKEND_URL } = import.meta.env;
+import { requestBackend } from "./backend";
 
 type FetchGetFondoEmergenciaParams = {
   token: string;
   signal?: AbortSignal;
 }
 
-type FetchGetFondoEmergenciaResponse = ResponseBackend<FondoEmergenciaDB>;
-
 export const fetchFondoEmergencia = async ({ token, signal }: FetchGetFondoEmergenciaParams) => {
-  return await fetch(`${VITE_BACKEND_URL}/fondo-emergencia`, {
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-    signal,
-  }).then(res => res.json()) as Promise<FetchGetFondoEmergenciaResponse>;
+  return await requestBackend<FondoEmergenciaDB | null>("/fondo-emergencia", { token, signal });
 }
 
 type FetchPatchFondoEmergenciaParams = {
@@ -26,15 +17,6 @@ type FetchPatchFondoEmergenciaParams = {
   data: PATCHFondoEmergencia;
 }
 
-type FetchPatchFondoEmergenciaResponse = ResponseBackend<FondoEmergenciaDB>;
-
 export const fetchPatchFondoEmergencia = async ({ token, data }: FetchPatchFondoEmergenciaParams) => {
-  return await fetch(`${VITE_BACKEND_URL}/fondo-emergencia`, {
-    method: "PATCH",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  }).then(res => res.json()) as Promise<FetchPatchFondoEmergenciaResponse>;
+  return await requestBackend<FondoEmergenciaDB>("/fondo-emergencia", { token, method: "PATCH", body: data });
 }

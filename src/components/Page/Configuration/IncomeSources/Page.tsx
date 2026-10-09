@@ -1,6 +1,7 @@
 // src\components\Page\Configuration\IncomeSources\Page.tsx
 
 import { Button } from "@/components/ui/button";
+import { MENSAJE_ERROR_CARGA } from "@/lib/const";
 import { Card } from "@/components/ui/card";
 import { createColumns } from "./columns";
 import { DataTable } from "@/components/utils/DataTable";
@@ -20,7 +21,7 @@ export const IncomeSourcesPage = () => {
   const toastId = useId();
   const queryClient = useQueryClient();
 
-  const { data, isFetching } = useFuentesIngresos({ user });
+  const { data, isPending, isFetching, isLoadingError } = useFuentesIngresos({ user });
 
   const [ sorting ] = useState([{
     id: 'activo',
@@ -77,8 +78,12 @@ export const IncomeSourcesPage = () => {
         Aquí puedes gestionar tus fuentes de ingreso
       </p>
 
+      {isLoadingError && (
+        <p className="text-sm text-red-600 dark:text-red-400 text-center">{MENSAJE_ERROR_CARGA}</p>
+      )}
+
       <Card className='p-4 bg-card rounded-xl shadow-md'>
-        <DataTable columns={columns} data={data} dataLoading={isFetching} toolbarActions={[ButtonAddSource]} sorting={sorting} columnsHidden={['activo']} />
+        <DataTable columns={columns} data={data} dataLoading={isPending} toolbarActions={[ButtonAddSource]} sorting={sorting} columnsHidden={['activo']} />
       </Card>
 
       {

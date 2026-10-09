@@ -1,6 +1,7 @@
 // src\hooks\useConceptosIngresos.ts
 
 import { fetchConceptosIngresos } from "@/lib/fetch/conceptosIngresos";
+import { getDataOrThrow } from "@/lib/fetch/backend";
 import { useAuth0, type User } from "@auth0/auth0-react";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import type { ConceptoIngresosDB } from "@/types/conceptosIngresos";
@@ -28,13 +29,12 @@ export const useConceptosIngresos = ({ user, periodo }: UseConceptosIngresosPara
       if (!token) return EMPTY_CONCEPTOS_INGRESOS;
 
       const response = await fetchConceptosIngresos({ periodo, token, signal });
-      return response.data || EMPTY_CONCEPTOS_INGRESOS;
+      return getDataOrThrow(response) ?? EMPTY_CONCEPTOS_INGRESOS;
     },
-    initialData: EMPTY_CONCEPTOS_INGRESOS,
     retry: 2,
     refetchOnWindowFocus: false,
     enabled: Boolean(user?.sub),
   })
 
-  return query
+  return { ...query, data: query.data ?? EMPTY_CONCEPTOS_INGRESOS }
 }

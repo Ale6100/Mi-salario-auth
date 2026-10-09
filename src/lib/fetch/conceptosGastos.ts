@@ -1,9 +1,7 @@
 // src\lib\fetch\conceptosGastos.ts
 
 import type { ConceptoGastosDB, PATCHConceptoGastos, POSTConceptoGastos, PUTConceptoGastos } from "@/types/conceptosGastos";
-import type { ResponseBackend } from "@/types/global";
-
-const { VITE_BACKEND_URL } = import.meta.env;
+import { requestBackend } from "./backend";
 
 type FetchGetConceptosGastosParams = {
   periodo?: string;
@@ -11,20 +9,13 @@ type FetchGetConceptosGastosParams = {
   signal?: AbortSignal;
 }
 
-type FetchGetConceptosGastosResponse = ResponseBackend<ConceptoGastosDB[]>;
-
 export const fetchConceptosGastos = async ({ periodo, token, signal }: FetchGetConceptosGastosParams) => {
   const query = new URLSearchParams();
   if (periodo) {
     query.set("periodo", periodo);
   }
 
-  return await fetch(`${VITE_BACKEND_URL}/conceptos-gastos?${query.toString()}`, {
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-    signal,
-  }).then(res => res.json()) as Promise<FetchGetConceptosGastosResponse>;
+  return await requestBackend<ConceptoGastosDB[]>(`/conceptos-gastos?${query.toString()}`, { token, signal });
 }
 
 type FetchPostConceptoGastosParams = {
@@ -32,17 +23,8 @@ type FetchPostConceptoGastosParams = {
   data: POSTConceptoGastos;
 }
 
-type FetchPostConceptoGastosResponse = ResponseBackend<ConceptoGastosDB>;
-
 export const fetchPostConceptoGastos = async ({ token, data }: FetchPostConceptoGastosParams) => {
-  return await fetch(`${VITE_BACKEND_URL}/conceptos-gastos`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  }).then(res => res.json()) as Promise<FetchPostConceptoGastosResponse>;
+  return await requestBackend<ConceptoGastosDB>("/conceptos-gastos", { token, method: "POST", body: data });
 }
 
 type FetchPutConceptoGastosParams = {
@@ -51,17 +33,8 @@ type FetchPutConceptoGastosParams = {
   data: PUTConceptoGastos;
 }
 
-type FetchPutConceptoGastosResponse = ResponseBackend<ConceptoGastosDB>;
-
 export const fetchPutConceptoGastos = async ({ token, id, data }: FetchPutConceptoGastosParams) => {
-  return await fetch(`${VITE_BACKEND_URL}/conceptos-gastos/${id}`, {
-    method: "PUT",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  }).then(res => res.json()) as Promise<FetchPutConceptoGastosResponse>;
+  return await requestBackend<ConceptoGastosDB>(`/conceptos-gastos/${id}`, { token, method: "PUT", body: data });
 }
 
 type FetchPatchConceptoGastosParams = {
@@ -70,17 +43,8 @@ type FetchPatchConceptoGastosParams = {
   data: PATCHConceptoGastos;
 }
 
-type FetchPatchConceptoGastosResponse = ResponseBackend<ConceptoGastosDB>;
-
 export const fetchPatchConceptoGastos = async ({ token, id, data }: FetchPatchConceptoGastosParams) => {
-  return await fetch(`${VITE_BACKEND_URL}/conceptos-gastos/${id}`, {
-    method: "PATCH",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  }).then(res => res.json()) as Promise<FetchPatchConceptoGastosResponse>;
+  return await requestBackend<ConceptoGastosDB>(`/conceptos-gastos/${id}`, { token, method: "PATCH", body: data });
 }
 
 type FetchDeleteConceptoGastosParams = {
@@ -88,15 +52,8 @@ type FetchDeleteConceptoGastosParams = {
   id: string;
 }
 
-type FetchDeleteConceptoGastosResponse = ResponseBackend<null>;
-
 export const fetchDeleteConceptoGastos = async ({ token, id }: FetchDeleteConceptoGastosParams) => {
-  return await fetch(`${VITE_BACKEND_URL}/conceptos-gastos/${id}`, {
-    method: "DELETE",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-  }).then(res => res.json()) as Promise<FetchDeleteConceptoGastosResponse>;
+  return await requestBackend<null>(`/conceptos-gastos/${id}`, { token, method: "DELETE" });
 }
 
 type FetchCopiarConceptosGastosParams = {
@@ -104,15 +61,6 @@ type FetchCopiarConceptosGastosParams = {
   periodoDestino: string;
 }
 
-type FetchCopiarConceptosGastosResponse = ResponseBackend<ConceptoGastosDB[]>;
-
 export const fetchCopiarConceptosGastosDelMesAnterior = async ({ token, periodoDestino }: FetchCopiarConceptosGastosParams) => {
-  return await fetch(`${VITE_BACKEND_URL}/conceptos-gastos/copiar-periodo-anterior`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ periodo_destino: periodoDestino }),
-  }).then(res => res.json()) as Promise<FetchCopiarConceptosGastosResponse>;
+  return await requestBackend<ConceptoGastosDB[]>("/conceptos-gastos/copiar-periodo-anterior", { token, method: "POST", body: { periodo_destino: periodoDestino } });
 }

@@ -210,7 +210,7 @@ export const Graph = ({ data, ingresosTotalesDelMes }: GraphProps) => {
         <div className="mt-4 space-y-4">
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
             <div className="text-center">
-              <p className="text-muted-foreground text-xs">Total gastado</p>
+              <p className="text-muted-foreground text-xs">Total de gastos</p>
               <p className="font-semibold">{formatPrice(totalGastado)}</p>
             </div>
             {ingresosTotalesDelMes > 0 && (

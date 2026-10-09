@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { es } from "date-fns/locale";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, parseMontoIngresado } from "@/lib/utils";
 import { getDate, getDaysInMonth, format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
@@ -14,7 +14,7 @@ import { useConceptosGastos } from "@/hooks/useConceptosGastos";
 import { useConceptosIngresos } from "@/hooks/useConceptosIngresos";
 import { useFondoEmergencia } from "@/hooks/useFondoEmergencia";
 import { usePatchSaldoReal } from "@/hooks/usePatchSaldoReal";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Wallet, CreditCard, Shield, PiggyBank, TrendingUp, TrendingDown, ArrowRight, AlertTriangle, CalendarDays, X } from "lucide-react";
 
 export const DashboardPage = () => {
@@ -28,15 +28,15 @@ export const DashboardPage = () => {
   const remainingDays = daysInMonth - dayOfMonth + 1;
   const mesTranscurrido = daysInMonth > 0 ? (dayOfMonth - 1) / daysInMonth : 0;
 
-  const { data: ingresos, isFetching: isFetchingIngresos } = useConceptosIngresos({
+  const { data: ingresos, isPending: isPendingIngresos, isLoadingError: isErrorIngresos } = useConceptosIngresos({
     user,
     periodo: currentPeriod,
   });
-  const { data: gastos, isFetching: isFetchingGastos } = useConceptosGastos({
+  const { data: gastos, isPending: isPendingGastos, isLoadingError: isErrorGastos } = useConceptosGastos({
     user,
     periodo: currentPeriod,
   });
-  const { data: fondo, isFetching: isFetchingFondo } = useFondoEmergencia({ user });
+  const { data: fondo, isPending: isPendingFondo, isLoadingError: isErrorFondo } = useFondoEmergencia({ user });
 
   const ingresosTotales = useMemo(() => {
     if (!ingresos?.length) return 0;
@@ -48,16 +48,15 @@ export const DashboardPage = () => {
     return gastos.reduce((sum, gas) => sum + (gas.monto ?? 0), 0);
   }, [gastos]);
 
-  const [saldoReal, setSaldoReal] = useState<number | null>(null);
+  const gastosPendientes = useMemo(() => {
+    return gastos.filter(gas => !gas.pagado).reduce((sum, gas) => sum + (gas.monto ?? 0), 0);
+  }, [gastos]);
+
   const [saldoRealInput, setSaldoRealInput] = useState("");
 
   const patchSaldoReal = usePatchSaldoReal();
 
-  useEffect(() => {
-    if (fondo) {
-      setSaldoReal(fondo.saldo_real ?? null);
-    }
-  }, [fondo]);
+  const saldoReal = patchSaldoReal.isPending ? patchSaldoReal.variables : fondo?.saldo_real ?? null;
 
   const excedente = Math.max(0, ingresosTotales - gastosTotales);
   const aporteFondo = fondo ? excedente * (fondo.porcentaje_total / 100) : 0;
@@ -77,27 +76,32 @@ export const DashboardPage = () => {
   const year = now.getFullYear();
 
   const handleSaveSaldoReal = () => {
-    const normalized = saldoRealInput
-      .replace(/[^0-9.,]/g, "")
-      .replaceAll(".", "")
-      .replaceAll(",", ".");
-    const value = Number(normalized);
-    if (!Number.isNaN(value) && value >= 0) {
-      setSaldoReal(value);
-      patchSaldoReal.mutate(value);
-      setSaldoRealInput("");
-    }
+    const value = parseMontoIngresado(saldoRealInput);
+    if (value === null) return;
+    patchSaldoReal.mutate(value);
+    setSaldoRealInput("");
   };
 
   const handleClearSaldoReal = () => {
-    setSaldoReal(null);
     patchSaldoReal.mutate(null);
     setSaldoRealInput("");
   };
 
-  const isFetching = isFetchingIngresos || isFetchingGastos || isFetchingFondo;
+  const isPending = isPendingIngresos || isPendingGastos || isPendingFondo;
+  const isError = isErrorIngresos || isErrorGastos || isErrorFondo;
 
-  if (isFetching) {
+  if (isError) {
+    return (
+      <section className="p-4 space-y-4">
+        <h1 className="text-3xl max-sm:text-lg font-bold text-center">Dashboard</h1>
+        <div className="flex justify-center items-center py-12">
+          <p className="text-muted-foreground">No se pudo cargar el resumen financiero. Intentá de nuevo más tarde.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (isPending) {
     return (
       <section className="p-4 space-y-4">
         <h1 className="text-3xl max-sm:text-lg font-bold text-center">Dashboard</h1>
@@ -168,6 +172,11 @@ export const DashboardPage = () => {
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Total de gastos estimados para {monthName}.
               </p>
+              {gastosPendientes > 0 && (
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Pendiente de pago: <span className="font-medium text-foreground">{formatPrice(gastosPendientes)}</span>
+                </p>
+              )}
               <Link
                 to={RUTAS.expenses}
                 className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 hover:underline"

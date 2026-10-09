@@ -1,22 +1,27 @@
 // src\components\Page\EmergencyFund\Page.tsx
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ChevronRight, CheckCircle, EyeOff, Landmark, PiggyBank, ChevronsRight, DollarSign, Goal, MousePointerClick, Percent, RefreshCw, TrendingUp, Trophy } from "lucide-react";
 import { fetchPatchFondoEmergencia } from "@/lib/fetch/fondoEmergencia";
 import { format } from "date-fns";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, redondearCentavos } from "@/lib/utils";
+import { getDataOrThrow } from "@/lib/fetch/backend";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useConceptosGastos } from "@/hooks/useConceptosGastos";
 import { useConceptosIngresos } from "@/hooks/useConceptosIngresos";
 import { useCotizacionDolarMep } from "@/hooks/useCotizacionDolarMep";
 import { useFondoEmergencia } from "@/hooks/useFondoEmergencia";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type { PATCHFondoEmergencia } from "@/types/fondoEmergencia";
+
+const PORCENTAJE_TOTAL_POR_DEFECTO = 33.33;
 
 const MILESTONES = [
   { meses: 1, label: "1 mes" },
@@ -45,14 +50,14 @@ export const EmergencyFundPage = () => {
   const { user, getAccessTokenSilently } = useAuth0();
   const queryClient = useQueryClient();
 
-  const { data, isFetching } = useFondoEmergencia({ user });
+  const { data, isPending, isSuccess, isFetching, isLoadingError: isError } = useFondoEmergencia({ user });
   const { data: cotizacionMep, isError: isErrorCotizacion } = useCotizacionDolarMep();
 
-  const { data: ingresosMesActual, isFetching: isFetchingIngresosMesActual } = useConceptosIngresos({
+  const { data: ingresosMesActual, isPending: isPendingIngresosMesActual, isLoadingError: isErrorIngresosMesActual } = useConceptosIngresos({
     user,
     periodo: format(new Date(), "yyyy-MM"),
   });
-  const { data: gastosMesActual, isFetching: isFetchingGastosMesActual } = useConceptosGastos({
+  const { data: gastosMesActual, isPending: isPendingGastosMesActual, isLoadingError: isErrorGastosMesActual } = useConceptosGastos({
     user,
     periodo: format(new Date(), "yyyy-MM"),
   });
@@ -80,65 +85,57 @@ export const EmergencyFundPage = () => {
   const [montoPesos, setMontoPesos] = useState(0);
   const [montoDolares, setMontoDolares] = useState(0);
   const [incluirDolares, setIncluirDolares] = useState(false);
-  const [porcentajeTotal, setPorcentajeTotal] = useState(66.66);
+  const [porcentajeTotal, setPorcentajeTotal] = useState(PORCENTAJE_TOTAL_POR_DEFECTO);
   const [gastosAdicionales, setGastosAdicionales] = useState(0);
-  const initializedRef = useRef(false);
+  const [inicializado, setInicializado] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
-    if (isFetching || initializedRef.current) return;
-    initializedRef.current = true;
+    if (!isSuccess || isFetching || inicializado) return;
+    setInicializado(true);
     if (data) {
       setMontoPesos(data.monto_pesos ?? 0);
       setMontoDolares(data.monto_dolares ?? 0);
       setIncluirDolares(data.incluir_dolares ?? false);
-      setPorcentajeTotal(data.porcentaje_total ?? 66.66);
+      setPorcentajeTotal(data.porcentaje_total ?? PORCENTAJE_TOTAL_POR_DEFECTO);
       setGastosAdicionales(data.gastos_adicionales ?? 0);
     }
-    setIsDirty(false);
-  }, [data, isFetching]);
+  }, [data, isSuccess, isFetching, inicializado]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const avisarCambiosSinGuardar = (e: BeforeUnloadEvent) => e.preventDefault();
+    globalThis.addEventListener("beforeunload", avisarCambiosSinGuardar);
+    return () => globalThis.removeEventListener("beforeunload", avisarCambiosSinGuardar);
+  }, [isDirty]);
 
   const patchMutation = useMutation({
     mutationFn: async (patchData: PATCHFondoEmergencia) => {
       const token = await getAccessTokenSilently();
       const response = await fetchPatchFondoEmergencia({ token, data: patchData });
-      if (response.statusCode !== 200) throw new Error("Error al guardar");
-      return response.data;
+      return getDataOrThrow(response);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["fondo-emergencia"] });
+    onSuccess: async () => {
       setIsDirty(false);
+      toast.success("Fondo de emergencia guardado");
+      await queryClient.invalidateQueries({ queryKey: ["fondo-emergencia"] });
     },
-    onError: () => {
-      setIsDirty(true);
+    onError: (error) => {
+      toast.error(`No se pudo guardar el fondo de emergencia: ${error.message}`);
     },
   });
 
-  const debounceRef = useRef<ReturnType<typeof globalThis.setTimeout>>(undefined);
+  const handleGuardar = () => {
+    patchMutation.mutate({
+      monto_pesos: montoPesos,
+      monto_dolares: montoDolares,
+      incluir_dolares: incluirDolares,
+      porcentaje_total: porcentajeTotal,
+      gastos_adicionales: gastosAdicionales,
+    });
+  };
 
-  const save = useCallback(() => {
-    if (!initializedRef.current) return;
-    if (debounceRef.current) globalThis.clearTimeout(debounceRef.current);
-    debounceRef.current = globalThis.setTimeout(() => {
-      if (!user?.sub) return;
-      patchMutation.mutate({
-        monto_pesos: Number(montoPesos),
-        monto_dolares: Number(montoDolares),
-        incluir_dolares: incluirDolares,
-        porcentaje_total: Number(porcentajeTotal),
-        gastos_adicionales: Number(gastosAdicionales),
-      });
-    }, 800);
-  }, [montoPesos, montoDolares, incluirDolares, porcentajeTotal, gastosAdicionales, patchMutation]);
-
-  useEffect(() => {
-    if (!isDirty) return;
-    save();
-    return () => {
-      if (debounceRef.current) globalThis.clearTimeout(debounceRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [montoPesos, montoDolares, incluirDolares, porcentajeTotal, gastosAdicionales]);
+  const puedeEditar = inicializado && !patchMutation.isPending;
 
   const dolaresEnPesos = cotizacionMep ? montoDolares * cotizacionMep.compra : 0;
   const fondoTotal = montoPesos + (incluirDolares ? dolaresEnPesos : 0);
@@ -183,15 +180,18 @@ export const EmergencyFundPage = () => {
     ? Math.min(100, (fondoTotal / milestoneData.current.target) * 100)
     : 0;
 
+  const parseValorNoNegativo = (texto: string) => {
+    const value = texto === "" ? 0 : Number.parseFloat(texto);
+    return Number.isNaN(value) ? 0 : redondearCentavos(Math.max(0, value));
+  };
+
   const handleMontoPesosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value === "" ? 0 : Number.parseFloat(e.target.value);
-    setMontoPesos(Number.isNaN(value) ? 0 : value);
+    setMontoPesos(parseValorNoNegativo(e.target.value));
     setIsDirty(true);
   };
 
   const handleMontoDolaresChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value === "" ? 0 : Number.parseFloat(e.target.value);
-    setMontoDolares(Number.isNaN(value) ? 0 : value);
+    setMontoDolares(parseValorNoNegativo(e.target.value));
     setIsDirty(true);
   };
 
@@ -201,20 +201,29 @@ export const EmergencyFundPage = () => {
   };
 
   const handlePorcentajeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value === "" ? 0 : Number.parseFloat(e.target.value);
-    setPorcentajeTotal(Number.isNaN(value) ? 0 : Math.min(100, Math.max(0, value)));
+    setPorcentajeTotal(Math.min(100, parseValorNoNegativo(e.target.value)));
     setIsDirty(true);
   };
 
   const handleGastosAdicionalesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value === "" ? 0 : Number.parseFloat(e.target.value);
-    setGastosAdicionales(Number.isNaN(value) ? 0 : value);
+    setGastosAdicionales(parseValorNoNegativo(e.target.value));
     setIsDirty(true);
   };
 
-  const isDataLoading = isFetching || isFetchingIngresosMesActual || isFetchingGastosMesActual;
+  const isDataLoading = isPending || isPendingIngresosMesActual || isPendingGastosMesActual;
+  const isErrorDatosDelMes = isErrorIngresosMesActual || isErrorGastosMesActual;
 
   const renderMilestoneSection = () => {
+    if (isErrorDatosDelMes) {
+      return (
+        <Card>
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            No se pudieron cargar los ingresos y gastos del mes. Intentá de nuevo más tarde.
+          </CardContent>
+        </Card>
+      );
+    }
+
     if (!milestoneData.hasExpenses) {
       return (
         <Card className="border-dashed border-2 bg-muted/20">
@@ -397,6 +406,12 @@ export const EmergencyFundPage = () => {
           <h2 className="text-lg font-semibold">Configuración del fondo</h2>
         </div>
 
+        {isError && !inicializado && (
+          <p className="text-sm text-red-600 dark:text-red-400">
+            No se pudo cargar tu fondo de emergencia, así que no se puede editar. Intentá de nuevo más tarde.
+          </p>
+        )}
+
         <Card>
           <CardContent className="p-4 space-y-5">
             <div className="space-y-1.5">
@@ -412,6 +427,7 @@ export const EmergencyFundPage = () => {
                   step={100}
                   value={montoPesos || ""}
                   onChange={handleMontoPesosChange}
+                  disabled={!puedeEditar}
                   placeholder="0"
                 />
               </div>
@@ -430,6 +446,7 @@ export const EmergencyFundPage = () => {
                   step={10}
                   value={montoDolares || ""}
                   onChange={handleMontoDolaresChange}
+                  disabled={!puedeEditar}
                   placeholder="0"
                 />
               </div>
@@ -444,6 +461,7 @@ export const EmergencyFundPage = () => {
                   id="incluir-dolares"
                   checked={incluirDolares}
                   onCheckedChange={handleIncluirDolaresChange}
+                  disabled={!puedeEditar}
                 />
               </div>
               {cotizacionMep && (
@@ -472,8 +490,9 @@ export const EmergencyFundPage = () => {
                   step={0.5}
                   value={porcentajeTotal || ""}
                   onChange={handlePorcentajeChange}
+                  disabled={!puedeEditar}
                   className="pr-8"
-                  placeholder="66.66"
+                  placeholder={PORCENTAJE_TOTAL_POR_DEFECTO.toString()}
                 />
                 <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-muted-foreground">
                   %
@@ -494,6 +513,7 @@ export const EmergencyFundPage = () => {
                   step={100}
                   value={gastosAdicionales || ""}
                   onChange={handleGastosAdicionalesChange}
+                  disabled={!puedeEditar}
                   placeholder="0"
                 />
               </div>
@@ -543,34 +563,21 @@ export const EmergencyFundPage = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-1.5">
-              {(() => {
-                if (patchMutation.isPending) {
-                  return (
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <RefreshCw className="size-3 animate-spin" />
-                      Guardando...
-                    </span>
-                  );
-                }
-                if (isDirty) {
-                  return (
-                    <span className="flex items-center gap-1 text-xs text-amber-600">
-                      <ChevronRight className="size-3" />
-                      Sin guardar
-                    </span>
-                  );
-                }
-                if (initializedRef.current) {
-                  return (
-                    <span className="flex items-center gap-1 text-xs text-emerald-600">
-                      <CheckCircle className="size-3" />
-                      Guardado
-                    </span>
-                  );
-                }
-                return null;
-              })()}
+            <div className="flex items-center justify-end gap-3">
+              {isDirty && !patchMutation.isPending && (
+                <span className="flex items-center gap-1 text-xs text-amber-600">
+                  <ChevronRight className="size-3" />
+                  Sin guardar
+                </span>
+              )}
+              <Button
+                onClick={handleGuardar}
+                disabled={!puedeEditar || !isDirty}
+                className="cursor-pointer gap-1.5"
+              >
+                {patchMutation.isPending && <RefreshCw className="size-4 animate-spin" />}
+                Guardar
+              </Button>
             </div>
           </CardContent>
         </Card>
