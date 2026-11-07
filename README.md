@@ -5,10 +5,10 @@ Aplicación web para organizar y visualizar las finanzas personales. Nació para
 ## Secciones
 
 - **Dashboard**: panorama general de la situación financiera actual.
-- **Ingresos** y **Gastos**: carga de los conceptos de cada período, clasificados por fuente. Los conceptos de un mes se pueden copiar del mes anterior, para no volver a cargar los que se repiten.
+- **Ingresos** y **Gastos**: carga de los conceptos de cada período, clasificados por fuente (con soporte para generar compras en cuotas mensuales consecutivas). Los conceptos de un mes se pueden copiar del mes anterior, para no volver a cargar los que se repiten.
 - **Fondo de emergencia**: ahorro reservado para cubrir los gastos en caso de quedarse sin ningún ingreso. Opcionalmente suma los ahorros en dólares, convertidos a pesos con el dólar MEP (precio de compra: lo que se obtiene al vender los dólares por la vía legal).
 - **Reportes**: resumen y balance de los gastos e ingresos declarados, y un gráfico de su evolución ajustada por inflación (en pesos del último mes con inflación publicada), para comparar meses distintos en términos reales. Los reportes se descargan en Markdown, un formato que también se presta para analizarlos con herramientas de IA.
-- **Configuración**: administración de las fuentes de ingreso y de gasto.
+- **Configuración**: administración de las fuentes de ingreso y de gasto, incluyendo vistas detalladas con estadísticas y evolución histórica tanto para fuentes de ingreso como de gasto.
 
 ## Stack
 
@@ -55,6 +55,7 @@ VITE_BACKEND_URL = X # url del backend
 ## Estructura
 
 - `src/components/Page/`: una carpeta por sección de la app (Dashboard, Income, Expenses, EmergencyFund, Reports, Configuration).
+- `src/components/search/`: buscador global rápido (pantallas, acciones y fuentes, con atajos y dictado por voz).
 - `src/components/ui/`: componentes de shadcn/ui.
 - `src/components/utils/` y `src/components/table/`: componentes reutilizables, como `DataTable` y sus filtros.
 - `src/hooks/`: hooks propios, entre ellos los que consultan cada recurso del backend con TanStack Query.

@@ -1,10 +1,11 @@
 // src\components\select\FormatFuenteOptionLabel.tsx
 
+import { FuenteBadge } from "@/components/ui/FuenteBadge";
+
 type FuenteOption = { value: string; label: string; color?: string };
 
 export const FormatFuenteOptionLabel = (option: FuenteOption) => (
-  <span className="flex items-center gap-2">
-    {option.color && <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: option.color }} />}
-    {option.label}
+  <span className="inline-flex items-center py-0.5">
+    <FuenteBadge nombre={option.label || option.value} color={option.color} />
   </span>
 );

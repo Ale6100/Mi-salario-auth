@@ -272,6 +272,7 @@ export const DashboardPage = () => {
 
       <Separator className="my-6" />
 
+      
       <section className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight">Proyección diaria</h2>
 

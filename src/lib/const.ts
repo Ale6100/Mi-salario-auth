@@ -8,7 +8,9 @@ export const RUTAS = {
   reports: "/reports",
   configuration: {
     incomeSources: "/configuration/income-sources",
+    incomeSourceEvolution: "/configuration/income-sources/:id",
     expenseSources: "/configuration/expense-sources",
+    expenseSourceEvolution: "/configuration/expense-sources/:id",
   }
 }
 

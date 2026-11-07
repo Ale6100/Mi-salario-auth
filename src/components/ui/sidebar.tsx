@@ -30,11 +30,17 @@ const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
+const SIDEBAR_PEEK_CLOSE_DELAY_MS = 180
 
 type SidebarContextProps = {
   state: "expanded" | "collapsed"
   open: boolean
   setOpen: (open: boolean) => void
+  peek: boolean
+  setPeek: (peek: boolean) => void
+  schedulePeekClose: () => void
+  cancelPeekClose: () => void
+  closePeekOnBlur: () => void
   openMobile: boolean
   setOpenMobile: (open: boolean) => void
   isMobile: boolean
@@ -72,6 +78,38 @@ function SidebarProvider({
   // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen)
   const open = openProp ?? _open
+
+  const [peek, _setPeek] = React.useState(false)
+  const peekCloseTimeout =
+    React.useRef<ReturnType<typeof setTimeout>>(undefined)
+  const isPointerInPeek = React.useRef(false)
+
+  const cancelPeekClose = React.useCallback(() => {
+    clearTimeout(peekCloseTimeout.current)
+    isPointerInPeek.current = true
+  }, [])
+
+  const setPeek = React.useCallback((value: boolean) => {
+    clearTimeout(peekCloseTimeout.current)
+    if (!value) isPointerInPeek.current = false
+    _setPeek(value)
+  }, [])
+
+  const schedulePeekClose = React.useCallback(() => {
+    clearTimeout(peekCloseTimeout.current)
+    isPointerInPeek.current = false
+    peekCloseTimeout.current = setTimeout(
+      () => _setPeek(false),
+      SIDEBAR_PEEK_CLOSE_DELAY_MS
+    )
+  }, [])
+
+  const closePeekOnBlur = React.useCallback(() => {
+    if (!isPointerInPeek.current) setPeek(false)
+  }, [setPeek])
+
+  React.useEffect(() => () => clearTimeout(peekCloseTimeout.current), [])
+
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value
@@ -80,11 +118,12 @@ function SidebarProvider({
       } else {
         _setOpen(openState)
       }
+      setPeek(false)
 
       // This sets the cookie to keep the sidebar state.
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
     },
-    [setOpenProp, open]
+    [setOpenProp, open, setPeek]
   )
 
   // Helper to toggle the sidebar.
@@ -117,12 +156,30 @@ function SidebarProvider({
       state,
       open,
       setOpen,
+      peek,
+      setPeek,
+      schedulePeekClose,
+      cancelPeekClose,
+      closePeekOnBlur,
       isMobile,
       openMobile,
       setOpenMobile,
       toggleSidebar,
     }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+    [
+      state,
+      open,
+      setOpen,
+      peek,
+      setPeek,
+      schedulePeekClose,
+      cancelPeekClose,
+      closePeekOnBlur,
+      isMobile,
+      openMobile,
+      setOpenMobile,
+      toggleSidebar,
+    ]
   )
 
   return (
@@ -155,13 +212,55 @@ function Sidebar({
   className,
   children,
   dir,
+  onPointerEnter,
+  onPointerLeave,
+  onFocus,
+  onBlur,
   ...props
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right"
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const {
+    isMobile,
+    open,
+    peek,
+    setPeek,
+    schedulePeekClose,
+    cancelPeekClose,
+    closePeekOnBlur,
+    openMobile,
+    setOpenMobile,
+  } = useSidebar()
+  const isPeeking = collapsible === "icon" && peek && !open
+  const state = open || isPeeking ? "expanded" : "collapsed"
+
+  // En pantallas táctiles el tap también dispara pointerenter, pero no siempre pointerleave: el sidebar quedaría abierto encima del contenido.
+  const handlePointerEnter = (event: React.PointerEvent<HTMLDivElement>) => {
+    onPointerEnter?.(event)
+    if (event.pointerType === "mouse") {
+      cancelPeekClose()
+      setPeek(true)
+    }
+  }
+
+  const handlePointerLeave = (event: React.PointerEvent<HTMLDivElement>) => {
+    onPointerLeave?.(event)
+    schedulePeekClose()
+  }
+
+  const handleFocus = (event: React.FocusEvent<HTMLDivElement>) => {
+    onFocus?.(event)
+    if (event.target.matches(":focus-visible")) {
+      setPeek(true)
+    }
+  }
+
+  const handleBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    onBlur?.(event)
+    if (!event.currentTarget.contains(event.relatedTarget)) closePeekOnBlur()
+  }
 
   if (collapsible === "none") {
     return (
@@ -209,6 +308,7 @@ function Sidebar({
       className="group peer hidden text-sidebar-foreground md:block"
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
+      data-peek={isPeeking}
       data-variant={variant}
       data-side={side}
       data-slot="sidebar"
@@ -221,15 +321,19 @@ function Sidebar({
           "group-data-[collapsible=offcanvas]:w-0",
           "group-data-[side=right]:rotate-180",
           variant === "floating" || variant === "inset"
-            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
+            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))] group-data-[peek=true]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
+            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[peek=true]:w-(--sidebar-width-icon)"
         )}
       />
       <div
         data-slot="sidebar-container"
         data-side={side}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
+          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width,box-shadow] duration-200 ease-linear group-data-[peek=true]:shadow-xl data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"

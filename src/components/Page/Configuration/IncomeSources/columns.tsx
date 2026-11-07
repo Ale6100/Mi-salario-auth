@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/utils/DataTableColumnHeader";
+import { FuenteBadge } from "@/components/ui/FuenteBadge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Settings2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -10,10 +11,11 @@ import type { FuenteIngresosDB } from "@/types/fuentesIngresos";
 type CreateColumnsProps = {
   readonly handleEdit: (fuente: FuenteIngresosDB) => void;
   readonly handleDelete: (fuente: FuenteIngresosDB) => void;
+  readonly handleEvolution: (fuente: FuenteIngresosDB) => void;
   readonly isFetching: boolean;
 };
 
-export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateColumnsProps): ColumnDef<FuenteIngresosDB>[] => [
+export const createColumns = ({ handleEdit, handleDelete, handleEvolution, isFetching }: CreateColumnsProps): ColumnDef<FuenteIngresosDB>[] => [
   {
     accessorKey: 'nombre',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nombre" />,
@@ -27,12 +29,8 @@ export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateCo
       if (!color) return <span>-</span>;
       return (
         <div className="flex items-center gap-2">
-          <div
-            className="size-5 rounded border border-border shrink-0"
-            style={{ backgroundColor: color }}
-            title={color}
-          />
-          <span className="font-mono text-sm">{color}</span>
+          <FuenteBadge nombre={row.original.nombre || color} color={color} />
+          <span className="font-mono text-xs text-muted-foreground">{color}</span>
         </div>
       );
     },
@@ -60,6 +58,13 @@ export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateCo
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup className="flex flex-col">
+              <DropdownMenuItem
+                title='Ver evolución histórica de la fuente'
+                className='cursor-pointer'
+                onClick={() => handleEvolution(row.original)}
+              >
+                Ver evolución
+              </DropdownMenuItem>
               <DropdownMenuItem
                 title='Editar fuente de ingreso'
                 className='cursor-pointer'

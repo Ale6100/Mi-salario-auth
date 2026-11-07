@@ -7,7 +7,9 @@ import { LayoutDashboard, Wallet, CreditCard, Shield, List, ClipboardList, LogOu
 import { Link, useLocation } from "react-router"
 import { ModeToggle } from "@/context/ModeToggle"
 import { RUTAS } from "@/lib/const"
+import { SearchTrigger } from "@/components/search/SearchTrigger"
 import { Separator } from "@/components/ui/separator"
+import { useSearch } from "@/components/search/SearchContext"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth0 } from "@auth0/auth0-react"
 
@@ -27,16 +29,16 @@ const configNavItems = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, logout } = useAuth0()
   const location = useLocation()
+  const { openSearch } = useSearch()
 
   return (
     <Sidebar variant="sidebar" collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
-          <SidebarTrigger className="cursor-e-resize" />
-          <ModeToggle />
-        </div>
-        <div className="hidden group-data-[collapsible=icon]:flex justify-center">
-          <SidebarTrigger className="cursor-w-resize" />
+        <div className="relative flex h-8 items-center justify-between">
+          <SidebarTrigger className="cursor-pointer" />
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 transition-opacity duration-200 ease-linear group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none">
+            <ModeToggle />
+          </div>
         </div>
 
         <SidebarMenu>
@@ -54,7 +56,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     className="size-4"
                   />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-left text-sm leading-tight transition-opacity duration-200 ease-linear group-data-[collapsible=icon]:opacity-0">
                   <span className="truncate font-semibold">Mi salario</span>
                   <span className="truncate text-xs text-muted-foreground">
                     Gestión financiera
@@ -64,6 +66,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+
+        <div className="px-1 pt-1 group-data-[collapsible=icon]:hidden">
+          <SearchTrigger onOpen={openSearch} variant="sidebar" />
+        </div>
+        <div className="hidden group-data-[collapsible=icon]:flex justify-center pt-1">
+          <SearchTrigger onOpen={openSearch} variant="icon" />
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
@@ -114,8 +123,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter>
         <Separator />
-        <div className="flex items-center justify-between px-2 py-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:px-0">
-          <div className="flex items-center gap-2 truncate group-data-[collapsible=icon]:hidden">
+        <div className="relative flex h-8 items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0 pr-8 transition-opacity duration-200 ease-linear group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none">
             <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted overflow-hidden">
               {user?.picture ? (
                 <img
@@ -134,7 +143,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <Button
             variant="destructive"
             size="icon-sm"
-            className="cursor-pointer shrink-0"
+            className="absolute right-0 top-1/2 -translate-y-1/2 cursor-pointer shrink-0"
             onClick={() =>
               logout({
                 logoutParams: { returnTo: globalThis.location.origin },

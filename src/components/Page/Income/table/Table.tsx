@@ -30,13 +30,6 @@ export const Table = ({ data, isPending, isFetching }: TableProps) => {
 
   const { data: fuentesData, isFetching: isFetchingFuentes } = useFuentesIngresos({ user });
 
-  const [ sorting ] = useState([
-    {
-      id: 'periodo',
-      desc: true,
-    }
-  ]);
-
   const [ isOpenAddEditDialog, setIsOpenAddEditDialog ] = useState<{ status: boolean, income: ConceptoIngresosDB | undefined }>({ status: false, income: undefined });
   const [ isDeleteOpen, setIsDeleteOpen ] = useState({ status: false, id: "" });
 
@@ -79,7 +72,7 @@ export const Table = ({ data, isPending, isFetching }: TableProps) => {
   return (
     <>
     <Card className='p-4 bg-card rounded-xl shadow-md'>
-      <DataTable columns={columns} data={data} dataLoading={isPending} toolbarActions={[ButtonCopyPreviousMonth, ButtonAddIncome]} sorting={sorting} />
+      <DataTable columns={columns} data={data} dataLoading={isPending} toolbarActions={[ButtonCopyPreviousMonth, ButtonAddIncome]} />
     </Card>
 
     {

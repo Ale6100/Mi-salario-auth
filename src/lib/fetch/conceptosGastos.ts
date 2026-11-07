@@ -1,6 +1,6 @@
 // src\lib\fetch\conceptosGastos.ts
 
-import type { ConceptoGastosDB, PATCHConceptoGastos, POSTConceptoGastos, PUTConceptoGastos } from "@/types/conceptosGastos";
+import type { ConceptoGastosDB, PATCHConceptoGastos, POSTConceptoGastos, POSTCuotasConceptoGastos, PUTConceptoGastos } from "@/types/conceptosGastos";
 import { requestBackend } from "./backend";
 
 type FetchGetConceptosGastosParams = {
@@ -25,6 +25,15 @@ type FetchPostConceptoGastosParams = {
 
 export const fetchPostConceptoGastos = async ({ token, data }: FetchPostConceptoGastosParams) => {
   return await requestBackend<ConceptoGastosDB>("/conceptos-gastos", { token, method: "POST", body: data });
+}
+
+type FetchPostConceptosGastosCuotasParams = {
+  token: string;
+  data: POSTCuotasConceptoGastos;
+}
+
+export const fetchPostConceptosGastosCuotas = async ({ token, data }: FetchPostConceptosGastosCuotasParams) => {
+  return await requestBackend<ConceptoGastosDB[]>("/conceptos-gastos/cuotas", { token, method: "POST", body: data });
 }
 
 type FetchPutConceptoGastosParams = {

@@ -1,10 +1,12 @@
 // src\components\Page\Expenses\table\columns.tsx
 
 import { Button } from "@/components/ui/button";
+import { Calendar, CircleCheck, Clock, Settings2 } from "lucide-react";
 import { cn, formatPrice } from "@/lib/utils";
 import { DataTableColumnHeader } from "@/components/utils/DataTableColumnHeader";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { CircleCheck, Clock, Settings2 } from "lucide-react";
+import { format } from "date-fns";
+import { FuenteBadge } from "@/components/ui/FuenteBadge";
 import type { ColumnDef, FilterFn } from "@tanstack/react-table";
 import type { ConceptoGastosDB } from "@/types/conceptosGastos";
 import type { Option } from "@/components/table/MultiFilterButton";
@@ -14,6 +16,7 @@ const ESTADO_PENDIENTE = 'Pendiente';
 
 export const ESTADO_COLUMN_ID = 'pagado';
 export const FUENTE_COLUMN_ID = 'id_fuente_gasto';
+export const PERIODO_COLUMN_ID = 'periodo';
 
 const SIN_FUENTE = '-';
 
@@ -21,8 +24,6 @@ export const estadoFilterOptions: Option[] = [
   { value: ESTADO_PAGADO, icon: <CircleCheck size={16} className="text-emerald-600 dark:text-emerald-400" />, defaultSelected: true },
   { value: ESTADO_PENDIENTE, icon: <Clock size={16} className="text-muted-foreground" />, defaultSelected: true },
 ];
-
-const getNombreFuente = (gasto: ConceptoGastosDB) => gasto.id_fuente_gasto?.nombre || SIN_FUENTE;
 
 export const createFuenteFilterOptions = (gastos: ConceptoGastosDB[]): Option[] => {
   const colorPorFuente = new Map<string, string | undefined>();
@@ -38,6 +39,33 @@ export const createFuenteFilterOptions = (gastos: ConceptoGastosDB[]): Option[] 
       defaultSelected: true,
     }));
 };
+
+export const createPeriodoFilterOptions = (gastos: ConceptoGastosDB[]): Option[] => {
+  const periodos = new Set<string>();
+  for (const gasto of gastos) {
+    if (gasto.periodo) {
+      periodos.add(gasto.periodo);
+    }
+  }
+
+  const currentPeriod = format(new Date(), 'yyyy-MM');
+  const sortedPeriodos = [...periodos].sort((a, b) => b.localeCompare(a));
+
+  let defaultPeriodo: string | undefined;
+  if (periodos.has(currentPeriod)) {
+    defaultPeriodo = currentPeriod;
+  } else {
+    defaultPeriodo = sortedPeriodos.find((p) => p <= currentPeriod) ?? sortedPeriodos[0];
+  }
+
+  return sortedPeriodos.map((periodo) => ({
+    value: periodo,
+    icon: <Calendar size={16} className="text-muted-foreground" />,
+    defaultSelected: periodo === defaultPeriodo,
+  }));
+};
+
+const getNombreFuente = (gasto: ConceptoGastosDB) => gasto.id_fuente_gasto?.nombre || SIN_FUENTE;
 
 const filtrarPorValoresSeleccionados: FilterFn<ConceptoGastosDB> = (row, columnId, valoresSeleccionados: string[]) => valoresSeleccionados.includes(row.getValue(columnId));
 
@@ -57,9 +85,7 @@ export const createColumns = ({ handleEdit, handleDelete, handleEditPagado, isFe
     cell: ({ row }) => {
       const nombre = getNombreFuente(row.original);
       const color = row.original.id_fuente_gasto?.color;
-      return (
-        <p style={color ? { color } : undefined}>{nombre}</p>
-      )
+      return <FuenteBadge nombre={nombre} color={color} />;
     }
   },
   {
@@ -118,9 +144,10 @@ export const createColumns = ({ handleEdit, handleDelete, handleEditPagado, isFe
     },
   },
   {
-    accessorKey: 'periodo',
+    accessorKey: PERIODO_COLUMN_ID,
     header: ({ column }) => <DataTableColumnHeader column={column} title="Periodo" />,
     accessorFn: (row) => row.periodo || '-',
+    filterFn: filtrarPorValoresSeleccionados,
   },
   {
     accessorKey: "acciones",
@@ -144,18 +171,10 @@ export const createColumns = ({ handleEdit, handleDelete, handleEditPagado, isFe
             </Button>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent className="w-fit">
+          <DropdownMenuContent>
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup className="flex flex-col">
-              <DropdownMenuItem
-                title='Editar gasto'
-                className='cursor-pointer'
-                onClick={() => handleEdit(row.original)}
-                disabled={isFetching}
-              >
-                Editar
-              </DropdownMenuItem>
               <DropdownMenuItem
                 title={labelPago}
                 className='cursor-pointer'
@@ -163,6 +182,14 @@ export const createColumns = ({ handleEdit, handleDelete, handleEditPagado, isFe
                 disabled={isFetching}
               >
                 {labelPago}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                title='Editar gasto'
+                className='cursor-pointer'
+                onClick={() => handleEdit(row.original)}
+                disabled={isFetching}
+              >
+                Editar
               </DropdownMenuItem>
               <DropdownMenuItem
                 title='Eliminar gasto'

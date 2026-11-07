@@ -8,7 +8,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { createColumns, createFuenteFilterOptions, ESTADO_COLUMN_ID, estadoFilterOptions, FUENTE_COLUMN_ID } from "./columns";
+import { createColumns, createFuenteFilterOptions, createPeriodoFilterOptions, ESTADO_COLUMN_ID, estadoFilterOptions, FUENTE_COLUMN_ID, PERIODO_COLUMN_ID } from "./columns";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CopyPreviousMonthButton } from "@/components/table/CopyPreviousMonthButton";
@@ -30,13 +30,6 @@ export const Table = ({ data, isPending, isFetching }: TableProps) => {
   const queryClient = useQueryClient();
 
   const { data: fuentesData, isFetching: isFetchingFuentes } = useFuentesGastos({ user });
-
-  const [ sorting ] = useState([
-    {
-      id: 'periodo',
-      desc: true,
-    }
-  ]);
 
   const [ isOpenAddEditDialog, setIsOpenAddEditDialog ] = useState<{ status: boolean, expense: ConceptoGastosDB | undefined }>({ status: false, expense: undefined });
   const [ isDeleteOpen, setIsDeleteOpen ] = useState({ status: false, id: "" });
@@ -79,6 +72,7 @@ export const Table = ({ data, isPending, isFetching }: TableProps) => {
   const columns = useMemo(() => createColumns({ handleEdit, handleDelete, handleEditPagado, isFetching: isFetching || isFetchingFuentes }), [isFetching, isFetchingFuentes]);
 
   const multiFilterButtons = useMemo(() => [
+    { columnId: PERIODO_COLUMN_ID, options: createPeriodoFilterOptions(data), label: "Periodo" },
     { columnId: FUENTE_COLUMN_ID, options: createFuenteFilterOptions(data), label: "Fuente" },
     { columnId: ESTADO_COLUMN_ID, options: estadoFilterOptions, label: "Estado" },
   ], [data]);
@@ -90,7 +84,7 @@ export const Table = ({ data, isPending, isFetching }: TableProps) => {
   return (
     <>
     <Card className='p-4 bg-card rounded-xl shadow-md'>
-      <DataTable columns={columns} data={data} dataLoading={isPending} toolbarActions={[ButtonCopyPreviousMonth, ButtonAddExpense]} sorting={sorting} multiFilterButtons={multiFilterButtons} />
+      <DataTable columns={columns} data={data} dataLoading={isPending} toolbarActions={[ButtonCopyPreviousMonth, ButtonAddExpense]} multiFilterButtons={multiFilterButtons} />
     </Card>
 
     {

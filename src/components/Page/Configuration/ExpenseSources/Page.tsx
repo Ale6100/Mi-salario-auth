@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useFuentesGastos } from "@/hooks/useFuentesGastos";
 import { useId, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import AlertAction from "@/components/utils/AlertAction";
 import type { BtnAlertActionConfig } from "@/components/utils/AlertAction";
@@ -18,6 +19,7 @@ import type { FuenteGastosDB } from "@/types/fuentesGastos";
 
 export const ExpenseSourcesPage = () => {
   const { user, getAccessTokenSilently } = useAuth0();
+  const navigate = useNavigate();
 
   const toastId = useId();
   const queryClient = useQueryClient();
@@ -38,6 +40,10 @@ export const ExpenseSourcesPage = () => {
 
   const handleDelete = (source: FuenteGastosDB) => {
     setIsDeleteOpen({ status: true, id: source._id });
+  }
+
+  const handleEvolution = (source: FuenteGastosDB) => {
+    navigate(`/configuration/expense-sources/${source._id}`);
   }
 
   const configBtnAcceptDelete: BtnAlertActionConfig = {
@@ -67,12 +73,15 @@ export const ExpenseSourcesPage = () => {
     }
   };
 
-  const columns = useMemo(() => createColumns({ handleEdit, handleDelete, isFetching }), [isFetching]);
+  const columns = useMemo(
+    () => createColumns({ handleEdit, handleDelete, handleEvolution, isFetching }),
+    [isFetching]
+  );
 
   const ButtonAddSource = <Button onClick={() => setIsOpenAddEditDialog({ status: true, source: undefined })} className="cursor-pointer" disabled={isFetching}>Agregar</Button>
 
   return (
-    <section className="p-4 space-y-4">
+    <section className="p-4 space-y-4 w-full max-w-7xl mx-auto">
       <h1 className="text-3xl max-sm:text-lg font-bold text-center">Fuentes de gastos</h1>
 
       <p className="text-muted-foreground text-center text-sm max-w-md mx-auto">

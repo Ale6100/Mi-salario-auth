@@ -58,4 +58,56 @@ describe("formSchema de gastos", () => {
       expect(erroresEn({ ...base, modo_porcentaje: true, monto: "" })).toEqual([]);
     });
   });
+
+  describe("en modo cuotas", () => {
+    it("acepta valores válidos con cuota inicial 1", () => {
+      expect(erroresEn({
+        ...base,
+        es_cuota: true,
+        monto: "5000",
+        total_cuotas: "6",
+        cuota_actual: "1",
+      })).toEqual([]);
+    });
+
+    it("acepta si empieza en una cuota intermedia (ej. 3 de 6)", () => {
+      expect(erroresEn({
+        ...base,
+        es_cuota: true,
+        monto: "5000",
+        total_cuotas: "6",
+        cuota_actual: "3",
+      })).toEqual([]);
+    });
+
+    it("rechaza si total de cuotas es menor a 2", () => {
+      expect(erroresEn({
+        ...base,
+        es_cuota: true,
+        monto: "5000",
+        total_cuotas: "1",
+        cuota_actual: "1",
+      })).toEqual(["total_cuotas"]);
+    });
+
+    it("rechaza si la cuota actual supera el total de cuotas", () => {
+      expect(erroresEn({
+        ...base,
+        es_cuota: true,
+        monto: "5000",
+        total_cuotas: "3",
+        cuota_actual: "4",
+      })).toEqual(["cuota_actual"]);
+    });
+
+    it("rechaza monto negativo o vacío", () => {
+      expect(erroresEn({
+        ...base,
+        es_cuota: true,
+        monto: "",
+        total_cuotas: "6",
+        cuota_actual: "1",
+      })).toEqual(["monto"]);
+    });
+  });
 });

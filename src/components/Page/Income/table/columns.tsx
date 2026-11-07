@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/utils/DataTableColumnHeader";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatPrice } from "@/lib/utils";
+import { FuenteBadge } from "@/components/ui/FuenteBadge";
 import { Settings2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ConceptoIngresosDB } from "@/types/conceptosIngresos";
@@ -23,7 +24,7 @@ export const createColumns = ({ handleEdit, handleDelete, isFetching }: CreateCo
       const nombre = row.original.id_fuente_ingreso?.nombre || '-';
       const color = row.original.id_fuente_ingreso?.color;
       return (
-        <p style={color ? { color } : undefined}>{nombre}</p>
+        <FuenteBadge nombre={nombre} color={color} />
       )
     }
   },

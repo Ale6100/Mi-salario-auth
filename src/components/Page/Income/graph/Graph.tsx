@@ -142,13 +142,13 @@ export const Graph = ({ data }: GraphProps) => {
             {average12Months > 0 && (
               <ReferenceLine
                 y={average12Months}
-                stroke="currentColor"
+                stroke="#94a3b8"
                 className="text-muted-foreground/60"
                 strokeDasharray="5 5"
                 label={{
                   value: `Prom. 12m: ${formatCompactPrice(average12Months)}`,
-                  position: "right",
-                  fill: "currentColor",
+                  position: "insideTopRight",
+                  fill: "#94a3b8",
                   fontSize: 12,
                 }}
               />

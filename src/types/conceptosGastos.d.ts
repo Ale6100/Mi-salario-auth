@@ -20,6 +20,15 @@ export type POSTConceptoGastos = {
   porcentaje_total?: number;
 };
 
+export type POSTCuotasConceptoGastos = {
+  id_fuente_gasto: string;
+  periodo_inicio: string;
+  monto: number;
+  total_cuotas: number;
+  cuota_actual?: number;
+  aclaracion?: string;
+};
+
 export type PUTConceptoGastos = POSTConceptoGastos;
 
 export type PATCHConceptoGastos = {

@@ -5,6 +5,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fetchPostFuenteIngresos, fetchPutFuenteIngresos } from "@/lib/fetch/fuentesIngresos";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { FuenteBadge } from "@/components/ui/FuenteBadge";
 import { formSchema, type FormSchema } from "./util";
 import { Input } from "@/components/ui/input";
 import { MsgError } from "@/components/forms/MsgError";
@@ -231,6 +232,12 @@ export const DialogAddEditIncomeSource = ({ isOpen, setIsOpen, actualSources }: 
                           title={field.value || "#000000"}
                         />
                       </div>
+                      {field.value && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Vista previa:</span>
+                          <FuenteBadge nombre={form.watch('nombre') || 'Ejemplo'} color={field.value} />
+                        </div>
+                      )}
                       <span className="text-xs text-muted-foreground/70 mt-1 block">
                         {field.value ? `Opacidad: ${alphaPercent}% · ${field.value}` : "Selecciona un color"}
                       </span>

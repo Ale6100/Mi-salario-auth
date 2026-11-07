@@ -3,10 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Controller, useForm } from "react-hook-form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { fetchPostConceptoGastos, fetchPutConceptoGastos } from "@/lib/fetch/conceptosGastos";
+import { fetchPostConceptoGastos, fetchPostConceptosGastosCuotas, fetchPutConceptoGastos } from "@/lib/fetch/conceptosGastos";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { format } from "date-fns";
 import { FormatFuenteOptionLabel } from "@/components/select/FormatFuenteOptionLabel";
+import { formatPrice } from "@/lib/utils";
 import { formSchema, VALOR_NO_USADO, type FormSchema } from "./util";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,15 +66,79 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
       monto: isEdit && isOpen.expense?.monto != null && isOpen.expense.monto !== -1 ? isOpen.expense.monto.toString() : "",
       modo_porcentaje: isEdit ? usaPorcentaje : false,
       porcentaje: isEdit && usaPorcentaje ? porcentajeTotal.toString() : "1",
+      es_cuota: false,
+      total_cuotas: "2",
+      cuota_actual: "1",
+      aclaracion: isEdit ? isOpen.expense?.aclaracion ?? "" : "",
     }
   });
 
   const modoPorcentaje = form.watch('modo_porcentaje');
+  const esCuota = form.watch('es_cuota');
+  const totalCuotasWatch = form.watch('total_cuotas');
+  const cuotaActualWatch = form.watch('cuota_actual');
+  const periodoWatch = form.watch('periodo');
+  const montoWatch = form.watch('monto');
+
+  const infoCuotas = useMemo(() => {
+    if (!esCuota || !periodoWatch) return null;
+    const total = Number.parseInt(totalCuotasWatch ?? '', 10);
+    const actual = Number.parseInt(cuotaActualWatch ?? '', 10);
+    if (Number.isNaN(total) || Number.isNaN(actual) || total < 2 || actual < 1 || actual > total) {
+      return null;
+    }
+    const cantidad = total - actual + 1;
+    const [year, month] = periodoWatch.split('-').map(Number);
+    if (!year || !month) return null;
+    const ultimoDate = new Date(Date.UTC(year, month - 1 + cantidad - 1, 1));
+    const ultimoPeriodo = `${ultimoDate.getUTCFullYear()}-${String(ultimoDate.getUTCMonth() + 1).padStart(2, '0')}`;
+    const montoCuota = Number.parseFloat(montoWatch ?? '') || 0;
+    const totalAPagar = montoCuota * cantidad;
+
+    return {
+      cantidad,
+      inicioPeriodo: periodoWatch,
+      finPeriodo: ultimoPeriodo,
+      cuotaDesde: actual,
+      cuotaHasta: total,
+      totalAPagar,
+    };
+  }, [esCuota, periodoWatch, totalCuotasWatch, cuotaActualWatch, montoWatch]);
 
   const onSubmit = async (data: FormSchema) => {
     const token = await getAccessTokenSilently();
 
     if (isEdit || !user?.sub || !token) return;
+
+    if (data.es_cuota) {
+      toast.loading("Generando cuotas...", { id: toastId });
+      const response = await fetchPostConceptosGastosCuotas({
+        token,
+        data: {
+          id_fuente_gasto: data.fuente_gasto,
+          periodo_inicio: data.periodo,
+          monto: Number.parseFloat(data.monto || '0'),
+          total_cuotas: Number.parseInt(data.total_cuotas ?? '2', 10),
+          cuota_actual: Number.parseInt(data.cuota_actual ?? '1', 10),
+          aclaracion: data.aclaracion?.trim() || undefined,
+        },
+      });
+
+      if (response.statusCode === 409) {
+        toast.error("Ya existe un gasto registrado para esta fuente en uno de los períodos de las cuotas", { id: toastId });
+        return;
+      }
+
+      if (response.statusCode !== 201) {
+        toast.error("Error al generar las cuotas", { id: toastId });
+        return close();
+      }
+
+      toast.success("Cuotas generadas correctamente", { id: toastId });
+      await queryClient.invalidateQueries({ queryKey: ["conceptos-gastos"] });
+      close();
+      return;
+    }
 
     const existingExpense = actualExpenses.find(expense => expense.id_fuente_gasto._id === data.fuente_gasto && expense.periodo === data.periodo);
     if (existingExpense) {
@@ -212,7 +277,9 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel className="required">Periodo</FieldLabel>
+                    <FieldLabel className="required">
+                      {esCuota ? "Período inicial" : "Periodo"}
+                    </FieldLabel>
                     <Input
                       type="month"
                       {...field}
@@ -230,7 +297,9 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel className="required">Monto</FieldLabel>
+                      <FieldLabel className="required">
+                        {esCuota ? "Monto de cada cuota" : "Monto"}
+                      </FieldLabel>
                       <Input
                         type="number"
                         step="0.01"
@@ -246,44 +315,149 @@ export const DialogAddEditExpense = ({ isOpen, setIsOpen, actualExpenses, fuente
                 />
               )}
 
-              <div className="rounded-lg border p-3 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="estimar-porcentaje" className="text-sm font-medium cursor-pointer">
-                    Estimar como porcentaje de ingresos
-                  </Label>
-                  <Controller
-                    name="modo_porcentaje"
-                    control={form.control}
-                    render={({ field }) => (
-                      <Switch
-                        id="estimar-porcentaje"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    )}
-                  />
-                </div>
-                {modoPorcentaje && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    Estimar un
+              {!isEdit && (
+                <div className="rounded-lg border p-3 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <Label htmlFor="compra-en-cuotas" className="text-sm font-medium cursor-pointer">
+                        Compra en cuotas
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Crea automáticamente los gastos para los próximos meses
+                      </p>
+                    </div>
                     <Controller
-                      name="porcentaje"
+                      name="es_cuota"
                       control={form.control}
                       render={({ field }) => (
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.1"
-                          {...field}
-                          className="inline-flex h-7 w-14 px-1 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        <Switch
+                          id="compra-en-cuotas"
+                          checked={field.value}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            if (checked) {
+                              form.setValue('modo_porcentaje', false);
+                            }
+                          }}
                         />
                       )}
                     />
-                    % de mis ingresos mensuales
                   </div>
-                )}
-              </div>
+
+                  {esCuota && (
+                    <div className="space-y-3 pt-2 border-t">
+                      <div className="grid grid-cols-2 gap-3">
+                        <Controller
+                          name="total_cuotas"
+                          control={form.control}
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <FieldLabel className="required text-xs">Total de cuotas</FieldLabel>
+                              <Input
+                                type="number"
+                                min="2"
+                                max="120"
+                                {...field}
+                                placeholder="Ej: 6"
+                              />
+                              <MsgError fieldState={fieldState} />
+                            </Field>
+                          )}
+                        />
+
+                        <Controller
+                          name="cuota_actual"
+                          control={form.control}
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <FieldLabel className="required text-xs">Cuota inicial a registrar</FieldLabel>
+                              <Input
+                                type="number"
+                                min="1"
+                                {...field}
+                                placeholder="1"
+                              />
+                              <MsgError fieldState={fieldState} />
+                            </Field>
+                          )}
+                        />
+                      </div>
+
+                      <Controller
+                        name="aclaracion"
+                        control={form.control}
+                        render={({ field }) => (
+                          <Field>
+                            <FieldLabel className="text-xs">Detalle de la compra (opcional)</FieldLabel>
+                            <Input
+                              type="text"
+                              {...field}
+                              placeholder="Ej: Zapatillas, Smart TV, etc."
+                            />
+                          </Field>
+                        )}
+                      />
+
+                      {infoCuotas && (
+                        <div className="rounded-md bg-muted/60 p-2.5 text-xs text-muted-foreground space-y-1">
+                          <p className="font-medium text-foreground">
+                            Se generarán {infoCuotas.cantidad} cuotas (desde Cuota {infoCuotas.cuotaDesde}/{infoCuotas.cuotaHasta} hasta {infoCuotas.cuotaHasta}/{infoCuotas.cuotaHasta})
+                          </p>
+                          <p>
+                            Períodos comprendidos: <span className="font-mono">{infoCuotas.inicioPeriodo}</span> al <span className="font-mono">{infoCuotas.finPeriodo}</span>.
+                          </p>
+                          {infoCuotas.totalAPagar > 0 && (
+                            <p>
+                              Total restante a pagar: <span className="font-semibold text-foreground">{formatPrice(infoCuotas.totalAPagar)}</span>
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!esCuota && (
+                <div className="rounded-lg border p-3 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label htmlFor="estimar-porcentaje" className="text-sm font-medium cursor-pointer">
+                      Estimar como porcentaje de ingresos
+                    </Label>
+                    <Controller
+                      name="modo_porcentaje"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Switch
+                          id="estimar-porcentaje"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      )}
+                    />
+                  </div>
+                  {modoPorcentaje && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      Estimar un
+                      <Controller
+                        name="porcentaje"
+                        control={form.control}
+                        render={({ field }) => (
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            {...field}
+                            className="inline-flex h-7 w-14 px-1 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          />
+                        )}
+                      />
+                      % de mis ingresos mensuales
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex justify-between">
                 <Button type="button" title="Cancelar" className="cursor-pointer" variant="destructive" onClick={close}>
