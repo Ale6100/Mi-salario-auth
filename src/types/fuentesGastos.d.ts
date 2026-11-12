@@ -6,6 +6,7 @@ export type FuenteGastosDB = {
   nombre: string;
   color: string;
   es_indispensable?: boolean;
+  seguimiento_diario?: boolean;
   updatedAt: string;
 };
 

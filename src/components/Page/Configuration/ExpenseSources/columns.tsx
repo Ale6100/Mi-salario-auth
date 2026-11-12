@@ -22,10 +22,14 @@ export const createColumns = ({ handleEdit, handleDelete, handleEvolution, isFet
     cell: ({ row }) => {
       const nombre = row.original.nombre || '-';
       const esIndispensable = row.original.es_indispensable;
+      const seguimientoDiario = row.original.seguimiento_diario;
       return (
         <span className="inline-flex items-center gap-1.5">
           {esIndispensable && (
             <span className="size-2 rounded-full bg-destructive shrink-0" title="Indispensable" />
+          )}
+          {seguimientoDiario && (
+            <span className="size-2 rounded-full bg-blue-500 shrink-0" title="Seguimiento diario" />
           )}
           {nombre}
         </span>

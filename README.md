@@ -5,14 +5,14 @@ Aplicación web para organizar y visualizar las finanzas personales. Nació para
 ## Secciones
 
 - **Dashboard**: panorama general de la situación financiera actual.
-- **Ingresos** y **Gastos**: carga de los conceptos de cada período, clasificados por fuente (con soporte para generar compras en cuotas mensuales consecutivas). Los conceptos de un mes se pueden copiar del mes anterior, para no volver a cargar los que se repiten.
+- **Ingresos** y **Gastos**: carga de los conceptos de cada período, clasificados por fuente (con soporte para generar compras en cuotas mensuales consecutivas). Los conceptos de un mes se pueden copiar del mes anterior, para no volver a cargar los que se repiten. En fuentes con seguimiento diario activado, muestra una proyección diaria de cuánto debería quedar y el gasto recomendado para el resto del mes.
 - **Fondo de emergencia**: ahorro reservado para cubrir los gastos en caso de quedarse sin ningún ingreso. Opcionalmente suma los ahorros en dólares, convertidos a pesos con el dólar MEP (precio de compra: lo que se obtiene al vender los dólares por la vía legal).
 - **Reportes**: resumen y balance de los gastos e ingresos declarados, y un gráfico de su evolución ajustada por inflación (en pesos del último mes con inflación publicada), para comparar meses distintos en términos reales. Los reportes se descargan en Markdown, un formato que también se presta para analizarlos con herramientas de IA.
 - **Configuración**: administración de las fuentes de ingreso y de gasto, incluyendo vistas detalladas con estadísticas y evolución histórica tanto para fuentes de ingreso como de gasto.
 
 ## Stack
 
-React 19 + TypeScript + Vite, con Tailwind y componentes de shadcn/ui. El login se hace con Auth0 y los datos se obtienen con TanStack Query del [backend del proyecto](https://github.com/Ale6100/Mi-salario-auth-backend); las tablas usan TanStack Table.
+React 19 + TypeScript + Vite, con Tailwind y componentes de shadcn/ui. Cuenta con soporte de Progressive Web App (PWA) instalable y carga offline vía Service Worker. El login se hace con Auth0 y los datos se obtienen con TanStack Query del [backend del proyecto](https://github.com/Ale6100/Mi-salario-auth-backend); las tablas usan TanStack Table.
 
 El deploy se hace en Netlify y su configuración vive allá, no en este repositorio.
 

@@ -38,6 +38,7 @@ export const DialogAddEditExpenseSource = ({ isOpen, setIsOpen, actualSources }:
       nombre: isEdit ? (isOpen.source?.nombre ?? "") : "",
       color: isEdit ? (isOpen.source?.color ?? "") : "",
       es_indispensable: isEdit ? (isOpen.source?.es_indispensable ?? false) : false,
+      seguimiento_diario: isEdit ? (isOpen.source?.seguimiento_diario ?? false) : false,
     }
   });
 
@@ -54,6 +55,7 @@ export const DialogAddEditExpenseSource = ({ isOpen, setIsOpen, actualSources }:
       nombre: data.nombre,
       color: data.color,
       es_indispensable: data.es_indispensable,
+      seguimiento_diario: data.seguimiento_diario,
     }
 
     toast.loading('Espere...', { id: toastId });
@@ -82,6 +84,7 @@ export const DialogAddEditExpenseSource = ({ isOpen, setIsOpen, actualSources }:
       nombre: data.nombre,
       color: data.color,
       es_indispensable: data.es_indispensable,
+      seguimiento_diario: data.seguimiento_diario,
     }
 
     toast.loading('Espere...', { id: toastId });
@@ -216,6 +219,28 @@ export const DialogAddEditExpenseSource = ({ isOpen, setIsOpen, actualSources }:
                     </div>
                     <Switch
                       id="es-indispensable"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </div>
+                )}
+              />
+
+              <Controller
+                name="seguimiento_diario"
+                control={form.control}
+                render={({ field }) => (
+                  <div className="flex items-center justify-between gap-2 rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="seguimiento-diario" className="text-sm font-medium cursor-pointer">
+                        Seguimiento diario del monto mensual
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Calcula día a día cuánto debería quedarte en el mes y el gasto diario recomendado
+                      </p>
+                    </div>
+                    <Switch
+                      id="seguimiento-diario"
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />

@@ -15,6 +15,7 @@ import { useConceptosIngresos } from "@/hooks/useConceptosIngresos";
 import { useFondoEmergencia } from "@/hooks/useFondoEmergencia";
 import { usePatchSaldoReal } from "@/hooks/usePatchSaldoReal";
 import { useMemo, useState } from "react";
+import { SeguimientoDiarioCard } from "@/components/Page/Expenses/SeguimientoDiarioCard";
 import { Wallet, CreditCard, Shield, PiggyBank, TrendingUp, TrendingDown, ArrowRight, AlertTriangle, CalendarDays, X } from "lucide-react";
 
 export const DashboardPage = () => {
@@ -50,6 +51,10 @@ export const DashboardPage = () => {
 
   const gastosPendientes = useMemo(() => {
     return gastos.filter(gas => !gas.pagado).reduce((sum, gas) => sum + (gas.monto ?? 0), 0);
+  }, [gastos]);
+
+  const gastosConSeguimiento = useMemo(() => {
+    return gastos?.filter(gas => gas.id_fuente_gasto?.seguimiento_diario) ?? [];
   }, [gastos]);
 
   const [saldoRealInput, setSaldoRealInput] = useState("");
@@ -379,6 +384,24 @@ export const DashboardPage = () => {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {gastosConSeguimiento.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              Seguimiento diario de gastos
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {gastosConSeguimiento.map((gasto) => (
+                <SeguimientoDiarioCard
+                  key={gasto._id}
+                  gasto={gasto}
+                  periodo={currentPeriod}
+                  ingresosTotalesDelMes={ingresosTotales}
+                />
+              ))}
+            </div>
+          </div>
         )}
 
         <Card>

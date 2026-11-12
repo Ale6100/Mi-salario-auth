@@ -7,6 +7,9 @@ import { createRoot } from 'react-dom/client'
 import { StrictMode } from 'react'
 import { ThemeProvider } from './context/theme-provider.tsx'
 import App from './App.tsx'
+import { registerServiceWorker } from './registerServiceWorker.ts'
+
+registerServiceWorker()
 
 const domain = import.meta.env.VITE_AUTH_DOMAIN
 const clientId = import.meta.env.VITE_AUTH_CLIENT_ID
